@@ -1,5 +1,5 @@
 /* 공용 데이터 · 저장소 · 유틸
-   실제 운영 시 Store.list / Store.add 만 Supabase·D1 호출로 바꾸면 됩니다. */
+   config.js에 Supabase 주소가 있으면 공유 저장소, 없으면 이 기기에만 저장하는 미리보기 모드 */
 (function (global) {
   const CONFIG = {
     examDay: '2026-11-19',
@@ -79,22 +79,113 @@
     return out;
   }
 
-  const KEY = 'kfta-tiro-2026-pieces';
+  // ===== 저장소 =====
+  const B = global.KFTA_BACKEND || {};
+  const REMOTE = !!(B.url && B.anonKey);
+  const q = new URLSearchParams(location.search);
+  const DEMO = q.has('demo') ? q.get('demo') !== '0' : !REMOTE && CONFIG.demo;   // 공유 저장소에서는 예시 응원을 섞지 않음
+  const KEY = REMOTE ? 'kfta-tiro-2026-mine' : 'kfta-tiro-2026-pieces';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
   const save = l => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {} };
 
+  // Supabase REST (라이브러리 없이 fetch)
+  async function api(path, opts = {}) {
+    const res = await fetch(B.url.replace(/\/$/, '') + path, Object.assign({}, opts, {
+      headers: Object.assign({ apikey: B.anonKey, Authorization: 'Bearer ' + B.anonKey, 'Content-Type': 'application/json' }, opts.headers || {})
+    }));
+    if (!res.ok) {
+      let body = null; try { body = await res.json(); } catch (e) {}
+      const err = new Error((body && (body.message || body.error)) || res.statusText);
+      err.code = body && body.message; err.status = res.status;
+      throw err;
+    }
+    return res.status === 204 ? null : res.json();
+  }
+  const PUBLIC_COLS = 'n,card,msg,region,nick';
+
+  let cache = [], maxN = 0, lastFull = 0;
+  // 내 응원(이 기기에서 보낸 것) 합치기: 검수 대기 중이어도 내 화면에는 보임
+  function merge(rows) {
+    const byN = new Map(rows.map(r => [r.n, r]));
+    load().forEach(m => {
+      const r = byN.get(m.n);
+      if (r) Object.assign(r, { mine: true, prize: m.prize, insta: m.insta, status: 'approved', pending: false });
+      else if (m.status !== 'hidden') { const x = Object.assign({}, m, { mine: true, pending: true }); delete x.memberId; rows.push(x); }
+    });
+    rows.sort((a, b) => a.n - b.n);
+    return rows;
+  }
+  async function checkMine() {
+    const mine = load(); let changed = false;
+    for (const m of mine) {
+      if (m.status !== 'pending' || !m.memberId) continue;
+      try { const st = await api('/rest/v1/rpc/my_piece_status', { method: 'POST', body: JSON.stringify({ p_n: m.n, p_member_id: m.memberId }) }); if (st && st !== m.status) { m.status = st; changed = true; } } catch (e) {}
+    }
+    if (changed) save(mine);
+  }
+
   const Store = {
-    list() {
-      const base = demoPieces(), mine = load();
-      mine.forEach((p, i) => base.push(Object.assign({}, p, { n: base.length + 1, mine: true })));
-      return base;
+    remote: REMOTE,
+    demo: DEMO,
+    // 전체 불러오기
+    async load() {
+      if (!REMOTE) {
+        const base = demoPieces();
+        load().forEach(p => base.push(Object.assign({}, p, { n: base.length + 1, mine: true })));
+        cache = base;
+      } else {
+        const rows = [];
+        for (let off = 0; ; off += 1000) {
+          const r = await api(`/rest/v1/pieces_public?select=${PUBLIC_COLS}&order=n.asc&limit=1000&offset=${off}`);
+          rows.push(...r); if (r.length < 1000) break;
+        }
+        await checkMine();
+        cache = merge(rows);
+        lastFull = Date.now();
+      }
+      maxN = cache.reduce((m, p) => Math.max(m, p.pending ? 0 : p.n), 0);
+      return cache;
     },
-    add(p) {
-      const mine = load(); mine.push({ region: p.region, nick: p.nick, msg: p.msg, card: p.card || 1, memberId: p.memberId || '', insta: p.insta || '', prize: !!p.prize, at: Date.now() }); save(mine);
-      const all = Store.list(); return all[all.length - 1];
+    // 새로 공개된 응원만 가져오기 (사이니지 · 아트월 주기 갱신). 30분마다 전체 다시 읽기(숨김 반영)
+    async pull() {
+      if (!REMOTE) return [];
+      if (Date.now() - lastFull > 30 * 60e3) { const before = new Set(cache.map(p => p.n)); await Store.load(); return cache.filter(p => !before.has(p.n)); }
+      const r = await api(`/rest/v1/pieces_public?select=${PUBLIC_COLS}&n=gt.${maxN}&order=n.asc&limit=500`);
+      if (!r.length) return [];
+      const have = new Map(cache.map(p => [p.n, p]));
+      const fresh = r.filter(x => { const old = have.get(x.n); if (old) { Object.assign(old, x, { pending: false }); return false; } return true; });
+      cache = merge(cache.filter(p => !p.pending).concat(fresh));
+      maxN = Math.max(maxN, ...r.map(x => x.n));
+      return fresh;
     },
-    mine() { return Store.list().filter(p => p.mine); },
+    list() { return cache; },
+    // 응원 보내기
+    async add(p) {
+      if (!REMOTE) {
+        const mine = load(); mine.push({ region: p.region, nick: p.nick, msg: p.msg, card: p.card || 1, memberId: p.memberId || '', insta: p.insta || '', prize: !!p.prize, at: Date.now() }); save(mine);
+        await Store.load(); return cache[cache.length - 1];
+      }
+      const r = await api('/rest/v1/rpc/submit_piece', { method: 'POST', body: JSON.stringify({ p_card: p.card, p_msg: p.msg, p_region: p.region, p_member_id: p.memberId, p_insta: p.insta || null, p_prize: !!p.prize }) });
+      const piece = { n: r.n, card: p.card, msg: p.msg, region: p.region, nick: r.nick, status: r.status, prize: !!p.prize, insta: p.insta || '', at: Date.now() };
+      const mine = load(); mine.push(Object.assign({ memberId: p.memberId }, piece)); save(mine);
+      cache = merge(cache.filter(x => !x.pending));
+      return cache.find(x => x.n === r.n) || Object.assign(piece, { mine: true, pending: r.status !== 'approved' });
+    },
+    mine() { return cache.filter(p => p.mine); },
   };
+
+  // 보내기 오류를 사람이 읽을 문장으로
+  function errorText(e) {
+    const c = (e && (e.code || e.message)) || '';
+    if (/already_submitted/.test(c)) return '이 아이디로는 이미 응원을 남기셨어요. 아트월의 "내 조각 찾기"로 확인해 보세요.';
+    if (/invalid_member_id/.test(c)) return '한국교총 홈페이지 아이디를 3~30자로 입력해 주세요.';
+    if (/invalid_message/.test(c)) return '응원 메시지를 2~100자로 적어 주세요.';
+    if (e && e.status === 429) return '잠시 후 다시 시도해 주세요.';
+    return '전송하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
+  }
+
+  // 메인 카드 기둥용 예시 응원 (실제 응원이 적을 때 채움)
+  function samplePieces(k) { const save = CONFIG.demo; CONFIG.demo = true; const s = demoPieces().slice(0, k); CONFIG.demo = save; return s.map(p => Object.assign(p, { sample: true })); }
 
   function dday() {
     const kst = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
@@ -152,5 +243,5 @@
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  Object.assign(global, { KFTA: { CONFIG, CARDS, REGIONS, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
+  Object.assign(global, { KFTA: { CONFIG, CARDS, REGIONS, errorText, samplePieces, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
 })(window);

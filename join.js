@@ -104,7 +104,8 @@
       <label class="jx-check"><input type="checkbox" id="jxC3"><span><b>[선택]</b> 경품 추첨에 응모합니다.</span></label>
     </div>
     <div class="jx-row"><button class="jx-btn jx-ghost" type="button" data-go="2">이전</button><button class="jx-btn jx-main" type="button" id="jxSend" disabled>응원 보내기 ✦</button></div>
-    <p class="jx-small">개인정보나 부적절한 표현이 담긴 응원은 검수 후 공개되지 않을 수 있습니다.</p>
+    <p class="jx-err" id="jxErr" role="alert" hidden></p>
+    <p class="jx-small">보내 주신 응원은 검수 후 아트월에 공개됩니다. 개인정보나 부적절한 표현이 담긴 응원은 공개되지 않을 수 있습니다.</p>
   </section>
 </div>`;
     document.body.appendChild(dlg);
@@ -168,17 +169,28 @@
     if (n === 3) renderMini();
     validate();
   }
-  function send() {
-    const p = Store.add({ card: state.card, msg: state.msg.trim().replace(/[ \t]+/g, ' '), region: state.region, nick: maskId(state.id), memberId: state.id, insta: $('#jxInsta').value.trim(), prize: $('#jxC3').checked });
-    const from = $('#jxPrev .mcard') || $('#jxMini .mcard');
-    dlg.close();
-    if (onDoneCb) onDoneCb(p, { prize: $('#jxC3').checked, insta: !!$('#jxInsta').value.trim(), from });
+  async function send() {
+    const btn = $('#jxSend'), err = $('#jxErr');
+    btn.disabled = true; btn.textContent = '보내는 중…'; err.hidden = true;
+    try {
+      const prize = $('#jxC3').checked, insta = $('#jxInsta').value.trim();
+      const p = await Store.add({ card: state.card, msg: state.msg.trim().replace(/[ \t]+/g, ' '), region: state.region, nick: maskId(state.id), memberId: state.id, insta, prize });
+      const from = $('#jxPrev .mcard') || $('#jxMini .mcard');
+      dlg.close();
+      if (onDoneCb) onDoneCb(p, { prize, insta: !!insta, from });
+    } catch (e) {
+      err.textContent = global.KFTA.errorText(e); err.hidden = false;
+      err.scrollIntoView({ block: 'nearest' });
+    } finally {
+      btn.textContent = '응원 보내기 ✦'; validate();
+    }
   }
   function openJoin(opts = {}) {
     if (!dlg) build();
     onDoneCb = opts.onDone || null;
     state = { card: 0, msg: '', region: '', id: '' };
     $('#jxId').value = ''; $('#jxInsta').value = ''; ['#jxC1', '#jxC2', '#jxC3'].forEach(id => $(id).checked = false);
+    $('#jxErr').hidden = true;
     mark(); go(1); dlg.showModal();
   }
 

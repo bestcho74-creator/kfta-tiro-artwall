@@ -61,6 +61,7 @@
 .jx-btn:disabled{opacity:.4;cursor:not-allowed}
 .jx-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
 .jx-main{background:linear-gradient(100deg,#FFD39A,#FFB866);color:#14306E;box-shadow:0 10px 30px rgba(255,184,102,.35)}
+.jx-err{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:rgba(255,99,99,.14);border:1px solid rgba(255,140,140,.45);color:#FFD6D6;font-size:13px;line-height:1.5}
 .jx-small{font-size:12px;color:rgba(255,255,255,.5);margin-top:12px;line-height:1.6}
 
 /* 보내는 중 연출 */

@@ -230,9 +230,16 @@
     const i = n - CONFIG.coreSize - 1;
     return i < pre.length ? pre[i] : outer[i - pre.length];
   }
-  function loadPieces() {
+  let topN = 0;   // 가장 큰 응원 번호 (숨김 처리된 번호는 빈자리로 남음)
+  // 공유 저장소에서 다시 읽고(fetch) 조각 자리 다시 계산
+  async function loadPieces(fetch = true) {
+    if (fetch) { try { await Store.load(); } catch (e) { console.warn(e); toast('응원을 불러오지 못했어요. 잠시 후 다시 시도할게요'); } }
+    rebuild();
+  }
+  function rebuild() {
     pieces = Store.list();
-    ensureOuter(Math.max(0, pieces.length - CONFIG.coreSize - pre.length) + 40);
+    topN = pieces.reduce((m, p) => Math.max(m, p.n), 0);
+    ensureOuter(Math.max(0, topN - CONFIG.coreSize - pre.length) + 40);
     byKey.clear(); byN.clear();
     pieces.forEach(p => { const s = slotOf(p.n); p.c = s.c; p.r = s.r; byKey.set(s.c + ',' + s.r, p); byN.set(p.n, p); });
     document.querySelectorAll('[data-count]').forEach(e => e.textContent = pieces.length.toLocaleString('ko-KR'));
@@ -361,7 +368,7 @@
 
   function render(now) {
     requestAnimationFrame(render);
-    if (!ROOM.ready || !pieces.length) return;
+    if (!ROOM.ready) return;
     const t = now / 1000;
     computeHome();
     if (tween) {
@@ -389,9 +396,9 @@
     }
 
     // 다음 자리 (빈 외곽 조각)
-    if (pieces.length >= CONFIG.coreSize + pre.length) {
+    if (topN >= CONFIG.coreSize + pre.length) {
       g.strokeStyle = 'rgba(31,95,208,.35)'; g.lineWidth = 1; g.setLineDash([3, 3]);
-      for (let n = pieces.length + 1; n <= pieces.length + 28; n++) {
+      for (let n = topN + 1; n <= topN + 28; n++) {
         const o = slotOf(n); if (!o || !vis(o.c, o.r)) continue;
         const [x, y] = toScreen(o.c * PITCH, o.r * PITCH); rr(g, x + 1, y + 1, s - 2, s - 2, s * 0.16); g.stroke();
       }
@@ -544,7 +551,7 @@
   $('#zIn').onclick = () => zoomAt(home.cx, home.cy, 1.5);
   $('#zOut').onclick = () => zoomAt(home.cx, home.cy, 1 / 1.5);
   $('#fit').onclick = () => fitAll(900);
-  $('#rand').onclick = () => { const p = pieces[Math.floor(Math.random() * pieces.length)]; flyToPiece(p); setTimeout(() => openPiece(p), 1100); };
+  $('#rand').onclick = () => { if (!pieces.length) return toast('아직 공개된 응원이 없어요. 첫 응원을 남겨 주세요!'); const p = pieces[Math.floor(Math.random() * pieces.length)]; flyToPiece(p); setTimeout(() => openPiece(p), 1100); };
   // 지역별 응원 조각: 토글로 열고 닫기
   const regToggle = on => { $('#regPanel').classList.toggle('on', on); $('#regBtn').classList.toggle('on', on); if (on) renderRegions(); };
   $('#regBtn').onclick = () => regToggle(!$('#regPanel').classList.contains('on'));
@@ -580,12 +587,12 @@
     tk.hidden = !mine;
     if (mine) {
       lastMine = p;
-      tk.textContent = (p.prize ? '응모권 1장이 지급됐어요.' : '경품 응모는 선택하지 않으셨어요.') + (p.prize && p.insta ? ' 인스타그램 이벤트 댓글이 확인되면 추가 추첨 기회 1회가 더해집니다.' : '') + ' 응원은 검수 후 공개됩니다.';
+      tk.textContent = (p.pending ? '검수 대기 중이에요. 승인되면 모든 화면의 아트월에 공개됩니다. ' : '') + (p.prize ? '응모권 1장이 지급됐어요.' : '경품 응모는 선택하지 않으셨어요.') + (p.prize && p.insta ? ' 인스타그램 이벤트 댓글이 확인되면 추가 추첨 기회 1회가 더해집니다.' : '');
     }
     if (!pieceDlg.open) pieceDlg.showModal();
   }
   const posText = p => `가로 ${p.c - Math.round(ccx) >= 0 ? '+' : ''}${p.c - Math.round(ccx)} · 세로 ${Math.round(ccy) - p.r >= 0 ? '+' : ''}${Math.round(ccy) - p.r}`;
-  $('#pNext').onclick = () => { const p = pieces[Math.floor(Math.random() * pieces.length)]; pieceDlg.close(); flyToPiece(p); setTimeout(() => openPiece(p), 1100); };
+  $('#pNext').onclick = () => { if (!pieces.length) return; const p = pieces[Math.floor(Math.random() * pieces.length)]; pieceDlg.close(); flyToPiece(p); setTimeout(() => openPiece(p), 1100); };
   $('#pStay').onclick = () => pieceDlg.close();
   document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
   document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
@@ -604,7 +611,7 @@
   }
   function openJoin() {
     if (pieceDlg.open) pieceDlg.close();
-    KFTA.openJoin({ onDone: (p, info) => { loadPieces(); welcome(byN.get(p.n), info); } });
+    KFTA.openJoin({ onDone: (p, info) => { rebuild(); welcome(byN.get(p.n) || p, info); } });
   }
   document.querySelectorAll('[data-join]').forEach(b => b.onclick = openJoin);
   const siteBase = () => CONFIG.shareBase || location.origin + location.pathname.replace(/[^/]*$/, '');   // 사이트 루트 주소
@@ -687,7 +694,7 @@
     const stepTour = () => {
       if (!signage) return;
       const card = $('#sgCard');
-      if (i % 4 === 0) { card.classList.remove('on'); fitAll(2200); tourT = setTimeout(stepTour, 9000); }
+      if (i % 4 === 0 || !pieces.length) { card.classList.remove('on'); fitAll(2200); tourT = setTimeout(stepTour, 9000); }
       else {
         const pool = pieces.slice(-40).concat(pieces), p = pool[Math.floor(Math.random() * pool.length)];
         selected = p; flyToPiece(p, 2400);
@@ -712,7 +719,7 @@
   });
 
   /* ===================== 시작 ===================== */
-  loadPieces();
+  await loadPieces();
   requestAnimationFrame(render);
   // 주소 뒤 #join · #new=N · #piece=N 처리 (처음 열 때와 주소가 바뀔 때 모두)
   function handleHash(delay) {
@@ -723,7 +730,18 @@
     const m = h.match(/piece=(\d+)/);
     if (m && byN.get(+m[1])) { const p = byN.get(+m[1]); setTimeout(() => { flyToPiece(p); setTimeout(() => openPiece(p), 1400); }, delay + 400); }
   }
-  addEventListener('hashchange', () => { loadPieces(); handleHash(0); });
+  addEventListener('hashchange', () => { rebuild(); handleHash(0); });
+  // 새로 공개된 응원을 15초마다 확인 → 아트월에 바로 반영 (사이니지에서는 날아와 박히는 연출)
+  setInterval(async () => {
+    if (document.hidden) return;
+    let fresh = [];
+    try { fresh = await Store.pull(); } catch (e) { return; }
+    if (!fresh.length) return;
+    rebuild();
+    const p = byN.get(fresh[fresh.length - 1].n);
+    if (p && !arrival && !pieceDlg.open) arrival = { p, t0: performance.now() };
+    if (!signage) toast(`새 응원 ${fresh.length}개가 아트월에 도착했어요`);
+  }, 15000);
   const start = () => {
     if (!ROOM.ready) return setTimeout(start, 80);
     setTimeout(() => $('#intro').classList.add('off'), 500);
