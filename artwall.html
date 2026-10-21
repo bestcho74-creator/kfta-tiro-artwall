@@ -10,12 +10,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261021c">
+<link rel="stylesheet" href="join.css?v=20261021e">
 <style>
 @font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2) format('woff2')}
 :root{--grad:linear-gradient(100deg,#1F5FD0 0%,#3D8BFF 55%,#62C3FF 100%);--line:rgba(255,255,255,.22);--dim:rgba(255,255,255,.78);--faint:rgba(255,255,255,.55);--glass:rgba(18,40,104,.7);
   --sans:'Pretendard Variable',Pretendard,-apple-system,sans-serif;--serif:'Gowun Batang',serif;--disp:'Paperlogy','Pretendard Variable',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
 html,body{height:100%;overflow:hidden;background:#DCE8FF;overscroll-behavior:none}
 body{font-family:var(--sans);color:#fff;-webkit-font-smoothing:antialiased;word-break:keep-all;user-select:none;-webkit-user-select:none}
 button,input,textarea{font:inherit;color:inherit}
@@ -180,7 +181,7 @@ body.signage .sg{display:block}
 .sg-stat .n{font:800 clamp(40px,5vw,120px)/1 var(--disp);letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 4px 30px rgba(0,0,0,.6)}
 .sg-stat .l{font-size:clamp(13px,1.1vw,24px);color:var(--dim)}
 .sg-stat .d{display:inline-block;margin-top:1.2vh;background:var(--grad);border-radius:999px;padding:.6vh 1.2vw;font-weight:800;font-size:clamp(14px,1.2vw,28px)}
-.sg-card{position:fixed;z-index:12;left:3vw;bottom:5vh;width:clamp(260px,26vw,560px);background:rgba(18,40,104,.72);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:clamp(18px,1.6vw,32px);padding:clamp(18px,2vw,40px);opacity:0;transform:translateY(20px);transition:opacity .9s,transform .9s}
+.sg-card{position:fixed;z-index:12;left:3vw;bottom:5vh;width:min(26vw,40vh);background:rgba(18,40,104,.72);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:clamp(18px,1.6vw,32px);padding:clamp(18px,2vw,40px);opacity:0;transform:translateY(20px);transition:opacity .9s,transform .9s}
 .sg-card.on{opacity:1;transform:none}
 .sg-card .no{font-size:clamp(12px,1vw,20px);font-weight:800;letter-spacing:.14em;color:#FFD39A;margin-bottom:1vh}
 .sg-card .m{font:700 clamp(22px,2.3vw,52px)/1.45 var(--serif);margin:1vh 0}
@@ -192,7 +193,7 @@ body.signage .sg{display:block}
 .sg-qr small{display:block;font-size:clamp(11px,.9vw,18px);color:var(--dim);font-weight:500;margin-top:.5vh}
 @media (orientation:portrait){
   body.signage .regpanel{display:none}
-  .sg-card{left:4vw;right:4vw;width:auto;bottom:17vh}
+  .sg-card{left:4vw;right:auto;width:min(56vw,30vh);bottom:3vh}
   .sg-qr{left:auto;right:4vw;bottom:3vh}
 }
 
@@ -293,11 +294,11 @@ body.signage .sg{display:block}
 <div class="intro" id="intro"><p>선생님들이 만드는<br><span class="g">티로</span> 수능응원 아트월<small>MEDIA ART · KFTA × TIRO</small></p></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="assets.js?v=20261021c"></script>
-<script src="data.js?v=20261021c"></script>
-<script src="qm-engine.js?v=20261021c"></script>
-<script src="join.js?v=20261021c"></script>
+<script src="assets.js?v=20261021e"></script>
+<script src="data.js?v=20261021e"></script>
+<script src="qm-engine.js?v=20261021e"></script>
+<script src="join.js?v=20261021e"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="artwall.js?v=20261021c"></script>
+<script src="artwall.js?v=20261021e"></script>
 </body>
 </html>

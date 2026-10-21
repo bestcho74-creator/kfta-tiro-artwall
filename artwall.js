@@ -665,7 +665,9 @@
   const storyBlob = async p => { const c = await storyCanvas(p); return new Promise(r => c.toBlob(r, 'image/png')); };
   async function storyImage(p) {
     const c = await storyCanvas(p);
-    const a = document.createElement('a'); a.download = `티로의_${p.n}번째_응원.png`; a.href = c.toDataURL('image/png'); a.click();
+    let url;
+    try { url = c.toDataURL('image/png'); } catch (e) { toast('이 환경에서는 이미지를 저장할 수 없어요. 배포된 주소에서 다시 시도해 주세요'); return; }
+    const a = document.createElement('a'); a.download = `티로의_${p.n}번째_응원.png`; a.href = url; a.click();
     // 저장 후 필수 해시태그 안내 → 바로 복사할 수 있게
     const box = $('#pTags'); box.hidden = false; box.classList.add('flash'); box.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => box.classList.remove('flash'), 2400);
@@ -712,16 +714,21 @@
   /* ===================== 시작 ===================== */
   loadPieces();
   requestAnimationFrame(render);
+  // 주소 뒤 #join · #new=N · #piece=N 처리 (처음 열 때와 주소가 바뀔 때 모두)
+  function handleHash(delay) {
+    const h = location.hash;
+    if (h === '#join') setTimeout(openJoin, delay + 400);
+    const nw = h.match(/new=(\d+)/);
+    if (nw && byN.get(+nw[1])) { const p = byN.get(+nw[1]); history.replaceState(null, '', location.pathname + location.search); setTimeout(() => welcome(p, {}), delay + 200); }
+    const m = h.match(/piece=(\d+)/);
+    if (m && byN.get(+m[1])) { const p = byN.get(+m[1]); setTimeout(() => { flyToPiece(p); setTimeout(() => openPiece(p), 1400); }, delay + 400); }
+  }
+  addEventListener('hashchange', () => { loadPieces(); handleHash(0); });
   const start = () => {
     if (!ROOM.ready) return setTimeout(start, 80);
     setTimeout(() => $('#intro').classList.add('off'), 500);
     if (signage) setSignage(true);
-    const h = location.hash;
-    if (h === '#join') setTimeout(openJoin, 900);
-    const nw = h.match(/new=(\d+)/);
-    if (nw && byN.get(+nw[1])) { const p = byN.get(+nw[1]); history.replaceState(null, '', location.pathname + location.search); setTimeout(() => welcome(p, {}), 700); }
-    const m = h.match(/piece=(\d+)/);
-    if (m && byN.get(+m[1])) { const p = byN.get(+m[1]); setTimeout(() => { flyToPiece(p); setTimeout(() => openPiece(p), 1400); }, 900); }
+    handleHash(500);
   };
   start();
 })();

@@ -21,7 +21,7 @@
     t.textContent = p.msg || '';
     t.className = 'mc-t ' + sizeClass((p.msg || '').length);
     s.textContent = opts.sign === false ? '' : signOf(p);
-    if (opts.editable) { t.contentEditable = 'plaintext-only'; if (t.contentEditable !== 'plaintext-only') t.contentEditable = 'true'; t.dataset.ph = '여기에 수험생에게 전할 응원을 적어 주세요'; t.spellcheck = false; }
+    if (opts.editable) { try { t.contentEditable = 'plaintext-only'; } catch (e) {} if (t.contentEditable !== 'plaintext-only') t.contentEditable = 'true'; t.dataset.ph = '여기에 수험생에게 전할 응원을 적어 주세요'; t.spellcheck = false; }
     return el;
   }
 
@@ -109,7 +109,10 @@
 </div>`;
     document.body.appendChild(dlg);
     $('.jx-x').onclick = () => dlg.close();
-    dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+    // 바깥(배경)을 눌렀다 뗄 때만 닫기 — 글자 선택 드래그로 닫히지 않게
+    let downOnBackdrop = false;
+    dlg.addEventListener('mousedown', e => { downOnBackdrop = e.target === dlg; });
+    dlg.addEventListener('click', e => { if (e.target === dlg && downOnBackdrop) dlg.close(); downOnBackdrop = false; });
     dlg.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(+b.dataset.go));
     $('.jx-cards').addEventListener('click', e => {
       const b = e.target.closest('.jx-pick'); if (!b) return;
@@ -138,13 +141,16 @@
     const el = cardEl(draft(), { editable: true });
     box.appendChild(el);
     const t = el.querySelector('.mc-t');
-    t.addEventListener('input', () => {
+    const sync = () => {
       let v = t.innerText.replace(/\n{3,}/g, '\n\n');
       if (v.length > MAX) { v = v.slice(0, MAX); t.textContent = v; placeCaret(t); }
       state.msg = v.trim() ? v : '';
       t.className = 'mc-t ' + sizeClass(v.length);
       $('#jxLen').textContent = v.length; validate();
-    });
+    };
+    // 한글 조합 중에는 글자 수를 자르지 않음 (조합이 끝난 뒤 정리)
+    t.addEventListener('input', e => { if (e.isComposing) { $('#jxLen').textContent = t.innerText.length; return; } sync(); });
+    t.addEventListener('compositionend', sync);
     t.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text')); });
     $('#jxLen').textContent = state.msg.length;
     return t;
@@ -158,7 +164,7 @@
   function go(n) {
     dlg.querySelectorAll('[data-s]').forEach(s => s.hidden = +s.dataset.s !== n);
     dlg.querySelectorAll('.jx-prog i').forEach((i, k) => i.classList.toggle('on', k < n));
-    if (n === 2) { const t = renderPreview(); setTimeout(() => { t.focus(); placeCaret(t); }, 60); }
+    if (n === 2) { const t = renderPreview(); t.focus(); placeCaret(t); }   // 탭한 순간 바로 포커스 → 휴대전화 키보드가 열림
     if (n === 3) renderMini();
     validate();
   }

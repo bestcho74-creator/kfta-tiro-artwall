@@ -1,15 +1,16 @@
 /* 메시지 카드 · 응원 남기기 (메인 · 아트월 공용) */
+[hidden]{display:none!important}
 
 /* 카드: layout.json 좌표 그대로 (메시지 x7% y15% w86% h60%, 서명 x7% y87%) */
 .mcard{position:relative;width:100%;aspect-ratio:1;container-type:inline-size;--ink:#16325C}
 .mcard>img{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .mc-m{position:absolute;left:7%;top:15%;width:86%;height:60%;display:flex;align-items:center;justify-content:center}
-.mc-t{width:100%;max-height:100%;overflow:hidden;text-align:center;color:var(--ink);font:700 7cqw/1.5 'Gowun Batang',serif;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere;white-space:pre-wrap;outline:none}
+.mc-t{width:100%;max-height:100%;overflow:hidden;text-align:center;color:var(--ink);font:700 22px/1.5 'Gowun Batang',serif;font:700 7cqw/1.5 'Gowun Batang',serif;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere;white-space:pre-wrap;outline:none}
 .mc-t.l2{font-size:6cqw}.mc-t.l3{font-size:5.2cqw}.mc-t.l4{font-size:4.6cqw}
 .mc-t[contenteditable]{cursor:text;min-height:1.5em;border-radius:2cqw;transition:background .2s}
 .mc-t[contenteditable]:focus{background:rgba(31,95,208,.05)}
 .mc-t:empty::before{content:attr(data-ph);opacity:.32;pointer-events:none}
-.mc-s{position:absolute;left:7%;top:87%;max-width:68%;font:700 3.6cqw/1.2 'Pretendard Variable',Pretendard,sans-serif;color:var(--ink);opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-s{position:absolute;left:7%;top:87%;max-width:68%;font:700 12px/1.2 'Pretendard Variable',Pretendard,sans-serif;font:700 3.6cqw/1.2 'Pretendard Variable',Pretendard,sans-serif;color:var(--ink);opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* 응원 남기기 창 */
 .jx{border:0;padding:0;background:transparent;color:#fff;max-width:none;max-height:none;margin:auto}
@@ -35,11 +36,11 @@
 .jx-meta{display:flex;justify-content:space-between;align-items:center;margin:10px 2px 0;font-size:12px;color:rgba(255,255,255,.6)}
 .jx-meta b{font-variant-numeric:tabular-nums;color:#fff}
 .jx-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.jx-chips button{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);border-radius:999px;padding:7px 12px;font:600 13px inherit;cursor:pointer}
+.jx-chips button{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);border-radius:999px;padding:7px 12px;font:600 13px/1.2 'Pretendard Variable',Pretendard,sans-serif;cursor:pointer}
 .jx-chips button:hover{border-color:#FFD39A;color:#fff}
 .jx-label{font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin:4px 0 8px}
 .jx-regions{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.jx-regions button{height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;font:700 14px inherit;cursor:pointer;transition:all .15s}
+.jx-regions button{height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;font:700 14px/1.2 'Pretendard Variable',Pretendard,sans-serif;cursor:pointer;transition:all .15s}
 .jx-regions button:hover{border-color:rgba(255,255,255,.45)}
 .jx-regions button.on{background:#fff;color:#14306E;border-color:#fff;box-shadow:0 6px 20px rgba(98,195,255,.45)}
 .jx-field{display:flex;flex-direction:column;gap:6px;margin-top:16px}
