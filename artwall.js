@@ -574,7 +574,8 @@
     $('#pTtl').innerHTML = `나는 티로의 <span class="g">${p.n.toLocaleString('ko-KR')}번째</span> 응원입니다`;
     const box = $('#pCard'); box.innerHTML = ''; box.appendChild(KFTA.cardEl(p));
     $('#pMeta').textContent = '조각 위치 ' + posText(p) + (p.n <= CONFIG.coreSize ? ' · 티로를 밝힌 조각' : baseByKey.has(keyOf(p)) ? ' · 작품을 넓힌 조각' : ' · 확장 조각');
-    $('#pMine').hidden = !mine; $('#pOther').hidden = mine;
+    $('#pMine').hidden = !mine; $('#pOther').hidden = mine; $('#pTags').hidden = !mine;
+    $('#pTags').classList.remove('flash');
     const tk = $('#pTk');
     tk.hidden = !mine;
     if (mine) {
@@ -608,15 +609,30 @@
   document.querySelectorAll('[data-join]').forEach(b => b.onclick = openJoin);
   const siteBase = () => CONFIG.shareBase || location.origin + location.pathname.replace(/[^/]*$/, '');   // 사이트 루트 주소
   const myLink = () => siteBase() + 'artwall.html#piece=' + (lastMine ? lastMine.n : '');
-  $('#copy').onclick = async () => { try { await navigator.clipboard.writeText(myLink()); toast('내 조각 링크를 복사했어요'); } catch (e) { toast(myLink()); } };
+  const TAGS = CONFIG.hashtags.join(' ');
+  const caption = () => `나는 티로의 ${lastMine.n.toLocaleString('ko-KR')}번째 응원입니다 ✦\n선생님들이 만드는 티로 수능응원 아트월에 함께해 주세요.\n${myLink()}\n\n${TAGS}`;
+  async function copyText(text, done) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+    toast(done);
+  }
+  $('#tagList').innerHTML = CONFIG.hashtags.map(t => `<span>${t}</span>`).join('');
+  $('#copyTags').onclick = () => copyText(TAGS, '필수 해시태그를 복사했어요. 스토리·피드에 붙여 넣어 주세요');
+  $('#copyCaption').onclick = () => copyText(caption(), '피드 문구를 복사했어요. 게시물 본문에 붙여 넣어 주세요');
+  $('#copy').onclick = () => copyText(myLink(), '내 조각 링크를 복사했어요');
   $('#share').onclick = async () => {
-    const data = { title: '선생님들이 만드는 티로 수능응원 아트월', text: `나는 티로의 ${lastMine.n}번째 응원입니다. 선생님의 한마디로 티로를 완성해 주세요!`, url: myLink() };
-    if (navigator.share) { try { await navigator.share(data); } catch (e) {} } else { $('#copy').click(); }
+    // 휴대전화: 스토리 이미지 + 해시태그 문구를 함께 공유 (인스타그램 등)
+    try {
+      const blob = await storyBlob(lastMine), file = new File([blob], `티로의_${lastMine.n}번째_응원.png`, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { copyText(TAGS, '해시태그를 복사해 두었어요. 올릴 때 붙여 넣어 주세요'); await navigator.share({ files: [file], text: caption() }); return; }
+      if (navigator.share) { await navigator.share({ title: '선생님들이 만드는 티로 수능응원 아트월', text: caption() }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    copyText(caption(), '공유 문구를 복사했어요. 원하는 곳에 붙여 넣어 주세요');
   };
   $('#story').onclick = () => storyImage(lastMine);
 
   // 스토리용 이미지 1080×1920: 아트월 배경 + 내 응원 카드
-  async function storyImage(p) {
+  async function storyCanvas(p) {
     await KFTA.cardsReady;
     const W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d');
@@ -639,8 +655,21 @@
     g.fillText(p.region + '교총 · ' + p.nick + ' · 조각 ' + posText(p), W / 2, 1560);
     g.fillStyle = 'rgba(255,255,255,.7)'; g.font = '600 30px Pretendard, sans-serif';
     g.fillText('수능 전날 11월 18일, 완성 작품 공개', W / 2, 1620);
+    // 필수 해시태그
+    g.fillStyle = '#FFD39A'; g.font = '800 36px Pretendard, sans-serif';
+    const tags = CONFIG.hashtags, half = Math.ceil(tags.length / 2);
+    g.fillText(tags.slice(0, half).join('  '), W / 2, 1730);
+    g.fillText(tags.slice(half).join('  '), W / 2, 1790);
+    return c;
+  }
+  const storyBlob = async p => { const c = await storyCanvas(p); return new Promise(r => c.toBlob(r, 'image/png')); };
+  async function storyImage(p) {
+    const c = await storyCanvas(p);
     const a = document.createElement('a'); a.download = `티로의_${p.n}번째_응원.png`; a.href = c.toDataURL('image/png'); a.click();
-    toast('스토리 이미지를 저장했어요');
+    // 저장 후 필수 해시태그 안내 → 바로 복사할 수 있게
+    const box = $('#pTags'); box.hidden = false; box.classList.add('flash'); box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => box.classList.remove('flash'), 2400);
+    toast('스토리 이미지를 저장했어요. 필수 해시태그를 복사해 함께 올려 주세요');
   }
 
   /* ===================== 사이니지 ===================== */

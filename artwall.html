@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261021b">
+<link rel="stylesheet" href="join.css?v=20261021c">
 <style>
 @font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2) format('woff2')}
 :root{--grad:linear-gradient(100deg,#1F5FD0 0%,#3D8BFF 55%,#62C3FF 100%);--line:rgba(255,255,255,.22);--dim:rgba(255,255,255,.78);--faint:rgba(255,255,255,.55);--glass:rgba(18,40,104,.7);
@@ -138,6 +138,14 @@ dialog[open]{animation:pop .35s cubic-bezier(.2,.9,.3,1.2)}
 .sheet-card .pno{text-align:center;margin-right:40px;margin-left:40px}
 .pttl{font:800 clamp(20px,5vw,26px)/1.3 var(--disp);letter-spacing:-.03em;text-align:center;margin:4px 0 2px}
 .pcard{width:min(420px,100%);margin:12px auto 0;filter:drop-shadow(0 14px 30px rgba(0,0,0,.35))}
+.tags{margin-top:14px;border-radius:18px;padding:14px;background:rgba(255,211,154,.1);border:1px solid rgba(255,211,154,.35);transition:box-shadow .4s,background .4s}
+.tags.flash{background:rgba(255,211,154,.24);box-shadow:0 0 0 3px rgba(255,211,154,.55)}
+.tags-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tags-h b{font-size:14px;color:#FFD39A}
+.tags-h span{font-size:12px;color:var(--faint)}
+.tags-list{display:flex;flex-wrap:wrap;gap:6px}
+.tags-list span{background:rgba(255,255,255,.1);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:700;user-select:all;-webkit-user-select:all}
+.tags .g2{margin-top:12px}
 .regs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .reg{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .reg .t{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700}
@@ -254,6 +262,11 @@ body.signage .sg{display:block}
       <button class="btn btn-ghost" id="copy" type="button">내 조각 링크 복사</button>
       <button class="btn btn-ghost" id="pStay" type="button">아트월 계속 보기</button>
     </div>
+    <div class="tags" id="pTags" hidden>
+      <div class="tags-h"><b>필수 해시태그</b><span>스토리 · 피드에 함께 붙여 넣어 주세요</span></div>
+      <div class="tags-list" id="tagList"></div>
+      <div class="g2"><button class="btn btn-white" id="copyTags" type="button">해시태그 복사</button><button class="btn btn-ghost" id="copyCaption" type="button">피드 문구 전체 복사</button></div>
+    </div>
     <p class="tk" id="pTk" hidden></p>
     <div class="rowb" id="pOther"><button class="btn btn-ghost" id="pNext" type="button">다른 응원 보기</button><button class="btn btn-grad" data-join type="button">나도 응원하기</button></div>
   </div>
@@ -280,11 +293,11 @@ body.signage .sg{display:block}
 <div class="intro" id="intro"><p>선생님들이 만드는<br><span class="g">티로</span> 수능응원 아트월<small>MEDIA ART · KFTA × TIRO</small></p></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="assets.js?v=20261021b"></script>
-<script src="data.js?v=20261021b"></script>
-<script src="qm-engine.js?v=20261021b"></script>
-<script src="join.js?v=20261021b"></script>
+<script src="assets.js?v=20261021c"></script>
+<script src="data.js?v=20261021c"></script>
+<script src="qm-engine.js?v=20261021c"></script>
+<script src="join.js?v=20261021c"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="artwall.js?v=20261021b"></script>
+<script src="artwall.js?v=20261021c"></script>
 </body>
 </html>
