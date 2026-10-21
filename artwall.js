@@ -606,7 +606,8 @@
     KFTA.openJoin({ onDone: (p, info) => { loadPieces(); welcome(byN.get(p.n), info); } });
   }
   document.querySelectorAll('[data-join]').forEach(b => b.onclick = openJoin);
-  const myLink = () => (CONFIG.shareBase || location.origin + location.pathname) + '#piece=' + (lastMine ? lastMine.n : '');
+  const siteBase = () => CONFIG.shareBase || location.origin + location.pathname.replace(/[^/]*$/, '');   // 사이트 루트 주소
+  const myLink = () => siteBase() + 'artwall.html#piece=' + (lastMine ? lastMine.n : '');
   $('#copy').onclick = async () => { try { await navigator.clipboard.writeText(myLink()); toast('내 조각 링크를 복사했어요'); } catch (e) { toast(myLink()); } };
   $('#share').onclick = async () => {
     const data = { title: '선생님들이 만드는 티로 수능응원 아트월', text: `나는 티로의 ${lastMine.n}번째 응원입니다. 선생님의 한마디로 티로를 완성해 주세요!`, url: myLink() };
@@ -647,7 +648,7 @@
   function renderQR() {
     const box = $('#qr'); box.innerHTML = '';
     // QR → 메인에서 카드 고르기부터 (보내면 그 휴대전화에서 아트월로 이어짐)
-    const url = (CONFIG.shareBase || location.origin + location.pathname.replace(/artwall\.html$/, '')) + 'index.html#join';
+    const url = siteBase() + 'index.html#join';
     if (window.QRCode) new QRCode(box, { text: url, width: 400, height: 400, colorDark: '#14081F', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
   }
   function tour() {
