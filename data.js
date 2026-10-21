@@ -1,0 +1,155 @@
+/* 공용 데이터 · 저장소 · 유틸
+   실제 운영 시 Store.list / Store.add 만 Supabase·D1 호출로 바꾸면 됩니다. */
+(function (global) {
+  const CONFIG = {
+    examDay: '2026-11-19',
+    revealDay: '2026-11-18', // 완성 작품 공개: 수능 전날
+    demo: true,              // 미리보기용 예시 응원 포함
+    demoCount: 236,          // 예시 응원 수 (200개 넘으면 외곽 확장까지 보임)
+    coreSize: 200,           // 티로를 이루는 첫 조각 수
+    wallDay: 'tiro_day.jpg',     // 아트월 원본 (낮)
+    wallNight: 'tiro_night.jpg', // 아트월 원본 (밤)
+    wallDaySoft: 'tiro_day_soft.png',     // 응원이 아직 없는 칸 (낮, 40% 투명)
+    wallNightSoft: 'tiro_night_soft.png', // 응원이 아직 없는 칸 (밤, 40% 투명)
+    sceneCols: 32,           // 장면 모자이크 가로 조각 수 (세로는 이미지 비율로)
+    focus: { x: 0.49, y: 0.5, rx: 0.2, ry: 0.46 },  // 장면 속 큰 티로 위치 (첫 200조각)
+    shareBase: '',           // 배포 주소. 비우면 현재 주소 사용
+  };
+
+  // 메시지 카드 4종 (layout.json 기준: 메시지 영역 x7% y15% w86% h60%, 닉네임 x7% y90.5%)
+  const CARDS = [
+    { id: 1, name: '밤 · 별빛 응원', ink: '#16325C' },
+    { id: 2, name: '낮 · 연필 응원', ink: '#244E6B' },
+    { id: 3, name: '밤 · 응원 편지', ink: '#2F2E50' },
+    { id: 4, name: '낮 · 반가운 응원', ink: '#315E62' },
+  ];
+
+  const REGIONS = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+  const WEIGHT = [14, 7, 5, 6, 3, 3, 2, 2, 20, 3, 3, 4, 3, 3, 5, 6, 1];
+
+  // 예시 응원 문장 (미리보기용)
+  const MESSAGES = [
+    '지금까지 쌓아 온 시간이 시험장에서 너를 지켜 줄 거야.',
+    '긴장되는 건 그만큼 준비했다는 뜻이에요. 평소처럼만!',
+    '어려운 문제는 잠시 넘기고, 다음 문제에 마음을 두세요.',
+    '아침밥 든든히 먹고, 수험표 두 번 확인하고 출발해요.',
+    '시험장 문을 나서는 순간, 이미 충분히 잘 해낸 거예요.',
+    '결과보다 오늘까지 버텨 온 너를 먼저 칭찬하고 싶다.',
+    '평소처럼, 연습한 그대로. 그거면 충분합니다.',
+    '한 문제에 흔들리지 말고 끝까지 너의 속도로 가자.',
+    '깊게 숨 한 번 쉬고, 첫 문제부터 천천히.',
+    '시험 끝나면 하고 싶었던 일부터 꼭 해 보길 바라요.',
+    '쉬는 시간엔 지난 교시는 내려놓기! 다음 교시만 보자.',
+    '너의 열아홉 살을 진심으로 응원한다.',
+    '마킹 확인, 시간 확인, 그리고 너 자신을 믿기.',
+    '교실에서 보던 그 집중력이면 충분해.',
+    '따뜻한 물 한 병, 손난로도 잊지 마세요.',
+    '오늘의 떨림은 내일의 자신감이 될 거예요.',
+    '선생님들이 시험장 밖에서 같은 마음으로 기다리고 있어요.',
+    '모르는 문제는 다른 친구들도 어렵다. 침착하게!',
+    '네가 쌓은 노력은 어디 가지 않아. 걱정 말고 다녀와.',
+    '시험은 하루지만 너의 가능성은 그보다 훨씬 길다.',
+    '실수해도 괜찮아. 다음 문제가 기다리고 있어.',
+    '마지막 교시까지 체력 안배! 점심은 가볍게.',
+    '꾸준히 걸어온 길을 믿어 보자. 넌 할 수 있어.',
+    '3년 동안 애 많이 썼다. 이제 보여 주고 오자.',
+    '수능은 끝이 아니라 새로운 시작의 문이에요.',
+    '티로처럼 씩씩하게! 선생님은 늘 네 편이야.',
+    '떨리면 손바닥을 꾹 눌러 봐. 천천히 숨 쉬고.',
+    '오늘까지 잘 해 왔으니, 내일도 잘 해낼 거야.',
+    '시험 잘 보고 와서 맛있는 거 먹자!',
+    '문제 끝까지, 선지 끝까지 읽기. 이것만 기억!',
+    '너는 혼자가 아니야. 응원하는 사람이 이렇게 많아.',
+    '그동안 흘린 땀이 오늘 빛날 거예요.',
+  ];
+  // 예시 아이디 (아트월에는 앞 3자리만 공개)
+  const NICKS = ['kft***', 'sun****', 'edu***', 'tea****', 'hop***', 'min****', 'par***', 'lee****', 'kim***', 'cho****', 'jeo***', 'han****', 'sta***', 'dre****', 'gyo***', 'tir****', 'seo***', 'bus****', 'jsh***', 'ysk****', 'ssa***', 'mat****', 'eng***', 'art****', 'hsc***', 'sci****'];
+
+  const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const pickW = (r, w) => { let s = w.reduce((a, b) => a + b, 0), x = r() * s; for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
+
+  function demoPieces() {
+    if (!CONFIG.demo) return [];
+    const r = rng(2026), out = [];
+    for (let i = 1; i <= CONFIG.demoCount; i++) {
+      const region = REGIONS[pickW(r, WEIGHT)], nick = NICKS[Math.floor(r() * NICKS.length)], msg = MESSAGES[Math.floor(r() * MESSAGES.length)];
+      out.push({ n: i, region, nick, msg, card: 1 + Math.floor(r() * 4), demo: true });
+    }
+    return out;
+  }
+
+  const KEY = 'kfta-tiro-2026-pieces';
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
+  const save = l => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {} };
+
+  const Store = {
+    list() {
+      const base = demoPieces(), mine = load();
+      mine.forEach((p, i) => base.push(Object.assign({}, p, { n: base.length + 1, mine: true })));
+      return base;
+    },
+    add(p) {
+      const mine = load(); mine.push({ region: p.region, nick: p.nick, msg: p.msg, card: p.card || 1, memberId: p.memberId || '', insta: p.insta || '', prize: !!p.prize, at: Date.now() }); save(mine);
+      const all = Store.list(); return all[all.length - 1];
+    },
+    mine() { return Store.list().filter(p => p.mine); },
+  };
+
+  function dday() {
+    const kst = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    const d = Math.round((Date.parse(CONFIG.examDay) - Date.parse(kst)) / 86400e3);
+    return d > 0 ? 'D-' + d : d === 0 ? 'D-DAY' : '수능 완료';
+  }
+
+  function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
+
+  // 티로 원본의 흰 배경을 가장자리부터 지워 투명하게
+  async function keyedTiro() {
+    const img = await loadImg(global.ASSETS.tiro);
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height), a = d.data, W = c.width, H = c.height;
+    const bg = i => a[i] > 222 && a[i + 1] > 222 && a[i + 2] > 222 && Math.max(a[i], a[i + 1], a[i + 2]) - Math.min(a[i], a[i + 1], a[i + 2]) < 22;
+    const seen = new Uint8Array(W * H), st = [];
+    for (let x = 0; x < W; x++) { st.push(x, (H - 1) * W + x); }
+    for (let y = 0; y < H; y++) { st.push(y * W, y * W + W - 1); }
+    while (st.length) {
+      const p = st.pop(); if (seen[p]) continue; seen[p] = 1;
+      if (!bg(p * 4)) continue;
+      a[p * 4 + 3] = 0;
+      const x = p % W, y = (p / W) | 0;
+      if (x > 0) st.push(p - 1); if (x < W - 1) st.push(p + 1); if (y > 0) st.push(p - W); if (y < H - 1) st.push(p + W);
+    }
+    // 가장자리 부드럽게
+    for (let p = 0; p < W * H; p++) {
+      if (a[p * 4 + 3] === 0) continue;
+      const x = p % W, y = (p / W) | 0;
+      let n = 0;
+      if (x > 0 && a[(p - 1) * 4 + 3] === 0) n++; if (x < W - 1 && a[(p + 1) * 4 + 3] === 0) n++;
+      if (y > 0 && a[(p - W) * 4 + 3] === 0) n++; if (y < H - 1 && a[(p + W) * 4 + 3] === 0) n++;
+      if (n) a[p * 4 + 3] = 150;
+    }
+    g.putImageData(d, 0, 0);
+    return c;
+  }
+
+  // 낮 · 밤: 주소(?theme=) > 직접 고른 값 > 한국 시간(07~18시 낮)
+  const THEME_KEY = 'kfta-tiro-theme';
+  function getTheme() {
+    const q = new URLSearchParams(location.search).get('theme');
+    if (q === 'day' || q === 'night') return q;
+    try { const s = localStorage.getItem(THEME_KEY); if (s === 'day' || s === 'night') return s; } catch (e) {}
+    const h = new Date(Date.now() + 9 * 3600e3).getUTCHours();
+    return h >= 7 && h < 18 ? 'day' : 'night';
+  }
+  function setTheme(t) { try { localStorage.setItem(THEME_KEY, t); } catch (e) {} }
+
+  function toast(text) {
+    let t = document.getElementById('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+    t.textContent = text; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  Object.assign(global, { KFTA: { CONFIG, CARDS, REGIONS, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
+})(window);

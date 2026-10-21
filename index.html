@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>선생님들이 만드는 티로 수능응원 아트월 | 한국교총</title>
+<meta name="description" content="2026 교총 티로 수능 응원 디지털 아트 — 선생님의 한마디가 한 조각이 되어 티로를 완성합니다.">
+<meta name="theme-color" content="#4A9BEA">
+<meta property="og:title" content="선생님들이 만드는 티로 수능응원 아트월 | 한국교총">
+<meta property="og:description" content="선생님의 한마디가 누군가의 내일을 밝힙니다.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="join.css">
+<style>
+@font-face{font-family:'Paperlogy';font-weight:500;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2) format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2) format('woff2')}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#D9EEFF}
+body.night,body.night html{background:#0B1236}
+body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smoothing:antialiased;word-break:keep-all}
+#stage{position:fixed;inset:0;width:100%;height:100%}
+.brand{position:fixed;z-index:20;left:max(16px,4vw);top:calc(env(safe-area-inset-top) + 18px);background:#fff;border-radius:999px;padding:7px 14px;display:flex;align-items:center;box-shadow:0 8px 30px rgba(16,40,110,.25)}
+.brand img{height:22px;width:auto;display:block}
+.top-r{position:fixed;z-index:20;right:max(16px,4vw);top:calc(env(safe-area-inset-top) + 18px);display:flex;gap:8px;align-items:center}
+.pill{border:1px solid rgba(255,255,255,.22);background:rgba(18,40,104,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;text-decoration:none}
+.pill b{color:#FFD39A}
+.cta2{cursor:pointer;transition:background .2s}
+.cta2:hover{background:rgba(31,95,208,.9)}
+.seg{display:inline-flex;background:rgba(18,40,104,.72);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:#fff;font:700 13px 'Pretendard Variable',Pretendard,sans-serif;padding:5px 11px;border-radius:999px;cursor:pointer}
+.seg button.on{background:#fff;color:#14306E}
+@media (max-width:560px){.brand img{height:18px}.top-r .pill:not(.dd){display:none}}
+</style>
+</head>
+<body>
+<a class="brand" href="index.html" aria-label="한국교총 메인으로" title="메인으로"><img src="logo.png" alt="한국교총"></a>
+<div class="top-r">
+  <span class="seg" role="group" aria-label="낮 · 밤 선택"><button type="button" data-theme="day">☀ 낮</button><button type="button" data-theme="night">☾ 밤</button></span>
+  <span class="pill dd">수능 <b id="dd">D-0</b></span>
+  <a class="pill cta2" href="artwall.html#join" data-join>응원 남기기</a>
+</div>
+<div id="stage"></div>
+
+<script src="assets.js"></script>
+<script src="data.js"></script>
+<script src="qm-engine.js"></script>
+<script src="join.js"></script>
+<script>
+(async function () {
+  const { CONFIG: SITE, Store, dday, keyedTiro, rng, REGIONS, getTheme, setTheme } = KFTA;
+  document.getElementById('dd').textContent = dday();
+  const pieces = Store.list();
+  let theme = getTheme();
+
+  // 카드 그림: 티로 · 응원 문장 (장면 카드는 아트월 원본 이미지를 그대로 씀)
+  const tiro = await keyedTiro();
+  try { await Promise.race([document.fonts.load('700 30px "Gowun Batang"'), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+  const PAL = [['#4A9BEA', '#1F5FD0'], ['#FFE2B0', '#FFA25A'], ['#D8EC9A', '#9DBB3E'], ['#BFE0FF', '#4A9BEA'], ['#2A56B8', '#14306E'], ['#FFF1D6', '#8CC4FF']];
+  function cardArt(i, p) {
+    const W = 480, H = 600, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'), [a, b] = PAL[i % PAL.length], r = rng(i * 31 + 7);
+    const lg = g.createLinearGradient(0, 0, W, H); lg.addColorStop(0, a); lg.addColorStop(1, b);
+    g.fillStyle = lg; g.fillRect(0, 0, W, H);
+    for (let k = 0; k < 5; k++) { const x = r() * W, y = r() * H, rad = 120 + r() * 220, rg = g.createRadialGradient(x, y, 0, x, y, rad); rg.addColorStop(0, `rgba(255,255,255,${0.18 + r() * 0.22})`); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, W, H); }
+    const dark = i % PAL.length === 4;
+    if (i % 2 === 0) {
+      const h = H * 0.78, w = h * tiro.width / tiro.height;
+      g.shadowColor = 'rgba(16,40,110,.35)'; g.shadowBlur = 40; g.shadowOffsetY = 20;
+      g.drawImage(tiro, (W - w) / 2, H - h - 8, w, h); g.shadowColor = 'transparent';
+    } else {
+      g.fillStyle = dark ? '#fff' : '#14306E'; g.font = '700 120px "Gowun Batang", serif'; g.globalAlpha = .3; g.fillText('“', 30, 150); g.globalAlpha = 1;
+      g.font = '700 40px "Gowun Batang", serif'; g.textBaseline = 'top';
+      const words = p.msg.split(' '), lines = []; let line = '';
+      words.forEach(wd => { const t = line ? line + ' ' + wd : wd; if (g.measureText(t).width > W - 90) { lines.push(line); line = wd; } else line = t; });
+      lines.push(line);
+      const y0 = (H - lines.length * 58) / 2 + 20;
+      lines.forEach((l, k) => g.fillText(l, 45, y0 + k * 58));
+    }
+    g.font = '800 22px Pretendard, sans-serif'; g.textBaseline = 'top'; g.fillStyle = dark ? 'rgba(255,255,255,.9)' : 'rgba(20,48,110,.85)';
+    g.fillText('No.' + String(p.n).padStart(4, '0'), 24, 24);
+    return c.toDataURL('image/jpeg', 0.88);
+  }
+  const SHOW = pieces.slice().sort((x, y) => (y.mine ? 1 : 0) - (x.mine ? 1 : 0)).slice(0, 12);
+  await KFTA.cardsReady;
+  // 응원 카드: 선생님이 고른 메시지 카드에 응원 문장을 얹어 그림
+  function messageCard(p) {
+    const S = 600, c = document.createElement('canvas'); c.width = c.height = S;
+    KFTA.drawCard(c.getContext('2d'), p, 0, 0, S);
+    return c.toDataURL('image/jpeg', 0.9);
+  }
+  const ART = SHOW.map((p, i) => i % 2 ? messageCard(p) : cardArt(i, p));
+
+  let regOpen = false;   // 지역별 응원 조각 팝오버 (화면이 다시 그려져도 상태 유지)
+
+  // ② 모션: 세로 카드 기둥 (쿼카 모션랩 원본 구조, 문구·카드만 교총 캠페인용으로)
+  function lpColumnMarquee(api) {
+    const night = theme === 'night';
+    const LABEL = 'KFTA × TIRO · 2026 수능 응원';
+    const S0 = lgBase(api);
+    const BODY = S0.tall ? '선생님의 한마디가 한 조각이 되어 티로를 완성합니다. 수능 전날 11월 18일 공개.' : '선생님의 한마디가 하나의 조각이 되어 티로를 완성합니다. 수능 전날인 11월 18일, 전국 교총 회원의 응원이 한 작품으로 공개됩니다.';
+    const BUTTON = '미디어아트 입장';
+    const CARDS = SHOW.map(p => [p.nick, p.region + '교총 · 응원 ' + String(p.n).padStart(4, '0')]);
+    const SLOW = 0.3, LOOP = 24;
+    const lp = lpKit(api), S = lgBase(api), W = S.W, H = S.H, u = S.u;
+    const face = lp.face('Paperlogy'), small = lp.face('Pretendard Variable'), fg = api.fg;
+    const ACCENT = night ? '#FFD39A' : '#1F5FD0';
+    const GRAD = night ? 'linear-gradient(100deg,#8CC4FF,#FFFFFF 50%,#FFD39A)' : 'linear-gradient(100deg,#1F5FD0,#3D8BFF 55%,#62C3FF)';
+    const all = S.div(api.root, 'position:absolute;left:0;top:0;width:100%;height:100%;');
+    // 배경: 아트월 장면을 크게 흐려 깐 하늘 + 글 쪽은 맑게
+    S.div(all, `position:absolute;inset:-10%;background:url("${night ? SITE.wallNight : SITE.wallDay}") 70% 40% / cover no-repeat;filter:blur(36px) saturate(1.15);opacity:${night ? .7 : .75};`);
+    S.div(all, `position:absolute;inset:0;background:${night
+      ? 'linear-gradient(90deg,rgba(8,14,44,.92) 0%,rgba(8,14,44,.72) 42%,rgba(8,14,44,.25) 100%)'
+      : 'linear-gradient(90deg,rgba(236,245,255,.94) 0%,rgba(236,245,255,.78) 42%,rgba(236,245,255,.2) 100%),radial-gradient(40% 50% at 8% 0%,rgba(255,246,220,.9),transparent 70%)'};`);
+    lp.grain(all, 0.035);
+    const pad = W * (S.wide ? 0.07 : 0.08), T = S.wide ? Math.min(W * 0.058, H * 0.115) : S.tall ? W * 0.115 : W * 0.07;
+    const text = S.div(all, `position:absolute;left:${pad}px;top:0;width:${S.wide ? W * 0.38 : S.tall ? W - pad * 2 : W * 0.38}px;color:${fg};z-index:2;`);
+    lp.label(text, LABEL, Math.max(11, Math.max(u * 0.017, T * 0.2)), ACCENT).style.marginBottom = T * 0.4 + 'px';
+    const TT = Math.min(T, (S.wide ? W * 0.38 : S.tall ? W - pad * 2 : W * 0.38) / 10.4);
+    const title = S.div(text, `font:800 ${TT}px/1.14 ${face};letter-spacing:-0.035em;white-space:pre-line;word-break:keep-all;`);
+    title.innerHTML = `선생님들이 만드는<br><span style="background:${GRAD};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">티로</span> 수능응원 아트월`;
+    S.div(text, `margin-top:${T * 0.42}px;font:400 ${Math.max(14, Math.max(u * 0.022, T * 0.27))}px/1.6 ${small};letter-spacing:-0.01em;color:${S.tint(0.72)};word-break:keep-all;text-wrap:balance;`, BODY);
+    const row = S.div(text, `display:flex;gap:${T * 0.14}px;flex-wrap:wrap;margin-top:${T * 0.5}px;`);
+    const fs = Math.max(14, Math.max(u * 0.021, T * 0.26));
+    const btn = S.div(row, `display:inline-flex;align-items:center;gap:${T * 0.16}px;padding:${T * 0.24}px ${T * 0.42}px;border-radius:999px;background:${night ? '#fff' : 'linear-gradient(100deg,#1F5FD0,#3D8BFF)'};color:${night ? '#14306E' : '#fff'};font:700 ${fs}px/1.1 ${small};cursor:pointer;text-decoration:none;box-shadow:0 10px 36px rgba(31,95,208,.35);`, null, 'a');
+    btn.href = 'artwall.html';
+    S.div(btn, '', BUTTON, 'span');
+    const arrow = S.div(btn, 'display:inline-block;transition:transform .25s', '→', 'span');
+    btn.onmouseenter = () => arrow.style.transform = 'translateX(4px)';
+    btn.onmouseleave = () => arrow.style.transform = '';
+    const btn2 = S.div(row, `display:inline-flex;align-items:center;padding:${T * 0.24}px ${T * 0.38}px;border-radius:999px;border:1.5px solid ${S.tint(0.3)};color:${fg};font:700 ${fs}px/1.1 ${small};cursor:pointer;text-decoration:none;background:${night ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.6)'};`, '응원 남기기', 'a');
+    btn2.href = 'artwall.html#join';
+    btn2.onclick = e => { e.preventDefault(); openJoin(); };
+    const stats = S.div(text, `display:flex;gap:${T * 0.5}px;margin-top:${T * 0.55}px;`);
+    [[pieces.length.toLocaleString('ko-KR'), '응원 조각'], ['17', '시·도교총'], [dday(), '11.19 수능']].forEach(([b, s]) => {
+      const st = S.div(stats, '');
+      S.div(st, `font:800 ${T * 0.42}px/1.1 ${face};letter-spacing:-.02em;font-variant-numeric:tabular-nums;`, b);
+      S.div(st, `font:500 ${Math.max(11, T * 0.17)}px/1.4 ${small};color:${S.tint(0.55)};margin-top:2px;`, s);
+    });
+    // 지역별 응원 조각: 버튼을 눌러야 열리는 팝오버
+    const pill = S.div(text, `display:inline-flex;align-items:center;gap:6px;margin-top:${T * 0.4}px;padding:${T * 0.12}px ${T * 0.24}px;border-radius:999px;border:1px solid ${S.tint(0.2)};background:${night ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.6)'};font:700 ${Math.max(12, T * 0.17)}px/1.2 ${small};color:${S.tint(0.85)};cursor:pointer;user-select:none;`, null, 'button');
+    pill.type = 'button';
+    S.div(pill, '', '지역별 응원 조각', 'span');
+    const caret = S.div(pill, 'display:inline-block;transition:transform .25s;', '▾', 'span');
+    const cnt = REGIONS.map(r => pieces.filter(p => p.region === r).length), max = Math.max(1, ...cnt);
+    const pop = S.div(all, `position:absolute;z-index:5;display:none;padding:${T * 0.22}px ${T * 0.26}px ${T * 0.16}px;border-radius:${T * 0.22}px;color:${fg};background:${night ? 'rgba(14,24,64,.94)' : 'rgba(255,255,255,.95)'};backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px ${S.tint(0.12)},0 24px 60px rgba(16,40,110,.3);`);
+    const hd = S.div(pop, `display:flex;justify-content:space-between;align-items:baseline;font:700 ${Math.max(11, T * 0.17)}px/1.2 ${small};color:${S.tint(0.85)};margin-bottom:${T * 0.16}px;`);
+    S.div(hd, '', '지역별 응원 조각', 'span');
+    S.div(hd, `font-weight:500;color:${S.tint(0.5)};`, '17개 시·도교총', 'span');
+    const CH = Math.max(70, T * 0.95);
+    const bars = S.div(pop, `display:flex;align-items:flex-end;gap:${Math.max(2, T * 0.05)}px;height:${CH}px;`);
+    const barEls = cnt.map((n, i) => {
+      const col = S.div(bars, 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;');
+      S.div(col, `font:700 ${Math.max(9, T * 0.12)}px/1 ${small};color:${S.tint(0.75)};margin-bottom:3px;font-variant-numeric:tabular-nums;`, n);
+      return S.div(col, `width:100%;max-width:${T * 0.3}px;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,#62C3FF,#1F5FD0);height:0;transition:height 1s cubic-bezier(.2,.8,.2,1) ${i * 30}ms;`);
+    });
+    const lb = S.div(pop, `display:flex;gap:${Math.max(2, T * 0.05)}px;margin-top:${T * 0.08}px;`);
+    REGIONS.forEach(r => S.div(lb, `flex:1;text-align:center;font:600 ${Math.max(9, T * 0.115)}px/1 ${small};color:${S.tint(0.6)};white-space:nowrap;`, r));
+    const setReg = on => {
+      regOpen = on; pop.style.display = on ? 'block' : 'none'; caret.style.transform = on ? 'rotate(180deg)' : '';
+      if (on) {
+        const rr = api.root.getBoundingClientRect(), pr = pill.getBoundingClientRect();
+        pop.style.left = pad + 'px';
+        pop.style.width = Math.min(W - pad * 2, Math.max(text.offsetWidth, 360)) + 'px';
+        // 아래가 모자라면 버튼 위로 펼침 (화면 밖으로 잘리지 않게)
+        const ph = pop.offsetHeight, below = pr.bottom - rr.top + 10;
+        pop.style.top = (below + ph <= H - 12 ? below : Math.max(12, pr.top - rr.top - ph - 10)) + 'px';
+        requestAnimationFrame(() => requestAnimationFrame(() => barEls.forEach((b, i) => b.style.height = Math.max(3, cnt[i] / max * CH * 0.65) + 'px')));
+      } else barEls.forEach(b => b.style.height = 0);
+    };
+    pill.onclick = e => { e.stopPropagation(); setReg(!regOpen); };
+    api.root.addEventListener('click', e => { if (regOpen && !pop.contains(e.target)) setReg(false); });
+    const th = text.offsetHeight;
+    text.style.top = (S.tall ? Math.max(H * 0.1, 76) : H * 0.5 - th / 2) + 'px';
+    const ncol = S.tall ? 2 : 3;
+    const gx = S.tall ? pad : S.wide ? W * 0.5 : W * 0.48, gw = S.tall ? W - pad * 2 : W * (S.wide ? 0.45 : 0.46);
+    const gy = S.tall ? Math.max(H * 0.1, 76) + th + H * 0.035 : 0, gh = H - gy;
+    const gap = Math.max(6, u * 0.022), cw = (gw - gap * (ncol - 1)) / ncol;
+    const ratios = [1.25, 0.8, 1.0, 1.2, 0.85, 1.05];
+    const cols = [];
+    for (let c = 0; c < ncol; c++) {
+      const box = S.div(all, `position:absolute;left:${gx + c * (cw + gap)}px;top:${gy}px;width:${cw}px;height:${gh}px;overflow:hidden;${S.edge(gh * 0.16, true)}`);
+      const tr = S.div(box, `position:absolute;left:0;top:0;width:100%;will-change:transform;`);
+      const cards = [];
+      const one = () => CARDS.forEach((cd, i0) => {
+        const i = (i0 + c * 4) % CARDS.length, img = api.image(i);
+        const card = S.div(tr, `margin-bottom:${gap}px;border-radius:${u * 0.02}px;overflow:hidden;cursor:pointer;` + (night
+          ? 'background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 20px 40px -20px rgba(0,0,0,.6);'
+          : 'background:#fff;box-shadow:0 0 0 1px rgba(20,48,110,.06),0 18px 36px -18px rgba(16,40,110,.35);'));
+        card.onclick = () => location.href = 'artwall.html#piece=' + SHOW[i].n;
+        // 세 번째 카드마다 아트월 장면을 그대로 보여 줌
+        const scene = (i0 + c) % 5 === 2;
+        S.div(card, `height:${cw * ratios[(i + c) % ratios.length]}px;background:url("${scene ? (night ? SITE.wallNight : SITE.wallDay) : img}") ${scene ? '48% 35%' : 'center'} / cover no-repeat;`);
+        const cap = S.div(card, `padding:${cw * 0.07}px ${cw * 0.08}px ${cw * 0.08}px;`);
+        S.div(cap, `font:700 ${Math.max(12, u * 0.016, cw * 0.072)}px/1.3 ${small};letter-spacing:-0.01em;color:${night ? '#fff' : '#14306E'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`, scene ? '티로 아트월 ' + (night ? '밤' : '낮') : CARDS[i][0]);
+        S.div(cap, `margin-top:${cw * 0.025}px;font:500 ${Math.max(10, u * 0.013, cw * 0.054)}px/1.3 ${small};letter-spacing:.02em;color:${night ? 'rgba(255,255,255,.55)' : 'rgba(20,48,110,.55)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`, scene ? '11.18 완성 작품 공개' : CARDS[i][1]);
+        cards.push(card);
+      });
+      one(); one();
+      const set = cards[CARDS.length].offsetTop - cards[0].offsetTop;
+      while (cards[cards.length - 1].offsetTop < gh + set) one();
+      cols.push({ tr: tr, set: set, x: gx + c * (cw + gap), dir: c % 2 ? 1 : -1, n: Math.max(1, Math.round([0.05, 0.065, 0.055][c] * gh * LOOP / set)) });
+    }
+    const mid = cols[Math.min(1, ncol - 1)], keys = [[1.4, 0.95, 0.9, 0], [2.8, (mid.x + cw * 0.5) / W, 0.5, 0], [5.2, (mid.x + cw * 0.55) / W, 0.56, 0], [6.6, 0.98, 0.7, 0]];
+    const over = (P, c) => P.on * (1 - lp.seg(Math.max(0, Math.abs(P.x - (c.x + cw / 2)) - cw / 2), 0, gap)) * (P.y > gy ? 1 : 0);
+    const flows = cols.map(c => lgFlow(LOOP, t => 1 - (1 - SLOW) * over(api.pointer(lp.path(t, keys)), c)));
+    const cursor = lp.cursor(api.root);
+    const frame = t => {
+      const P = api.pointer(lp.path(t % LOOP, keys)), real = api.live || P.fake < 0.999;
+      cols.forEach((c, k) => {
+        const f = ((flows[k].at(t, real, 1 - (1 - SLOW) * over(P, c)) * c.n) % 1 + 1) % 1;
+        const y = c.dir < 0 ? -f * c.set : -c.set + f * c.set;
+        c.tr.style.transform = `translateY(${y.toFixed(2)}px)`;
+      });
+      cursor.set(P);
+    };
+    if (regOpen) requestAnimationFrame(() => setReg(true));
+    frame.fonts = true;
+    return frame;
+  }
+
+  // ① 설정 (쿼카 모션랩 CONFIG 형식) — 낮 · 밤에 따라 바탕색과 글자색이 바뀜
+  const configFor = t => ({
+    images: ART,
+    speed: 1,
+    bg: t === 'night' ? '#0B1236' : '#E6F1FF',
+    colors: ['#ffffff', '#D9EEFF', '#8CC4FF', '#4A9BEA', '#1F5FD0', '#1F5FD0', '#FFA25A', '#14306E'],
+    live: true,
+    ratio: 'auto'
+  });
+  function openJoin() { KFTA.openJoin({ onDone: p => KFTA.sendAway(p, 'artwall.html#new=' + p.n) }); }
+  document.querySelectorAll('[data-join]').forEach(b => b.onclick = e => { e.preventDefault(); openJoin(); });
+  const stage = document.getElementById('stage');
+  let engine = null;
+  function start() {
+    document.body.classList.toggle('night', theme === 'night');
+    document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', b.dataset.theme === theme));
+    if (engine) engine.destroy();
+    engine = qmEngine(stage, configFor(theme), lpColumnMarquee);
+  }
+  document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { if (theme === b.dataset.theme) return; theme = b.dataset.theme; setTheme(theme); start(); });
+  start();
+  if (location.hash === '#join') setTimeout(openJoin, 600);   // 사이니지 QR로 들어온 경우
+})();
+</script>
+</body>
+</html>
