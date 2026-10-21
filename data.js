@@ -101,9 +101,9 @@
     }
     return res.status === 204 ? null : res.json();
   }
-  const PUBLIC_COLS = 'n,card,msg,region,nick';
+  const PUBLIC_COLS = 'n,card,msg,region,nick,shown_at';
 
-  let cache = [], maxN = 0, lastFull = 0;
+  let cache = [], lastShown = '', lastFull = 0;   // lastShown: 가장 최근 공개 시각
   // 내 응원(이 기기에서 보낸 것) 합치기: 검수 대기 중이어도 내 화면에는 보임
   function merge(rows) {
     const byN = new Map(rows.map(r => [r.n, r]));
@@ -143,19 +143,20 @@
         cache = merge(rows);
         lastFull = Date.now();
       }
-      maxN = cache.reduce((m, p) => Math.max(m, p.pending ? 0 : p.n), 0);
+      lastShown = cache.reduce((m, p) => (p.shown_at && p.shown_at > m ? p.shown_at : m), lastShown);
       return cache;
     },
-    // 새로 공개된 응원만 가져오기 (사이니지 · 아트월 주기 갱신). 30분마다 전체 다시 읽기(숨김 반영)
+    // 새로 공개된 응원만 가져오기 (공개 시각 기준이라 번호 순서와 무관). 30분마다 전체 다시 읽기(숨김 반영)
     async pull() {
       if (!REMOTE) return [];
       if (Date.now() - lastFull > 30 * 60e3) { const before = new Set(cache.map(p => p.n)); await Store.load(); return cache.filter(p => !before.has(p.n)); }
-      const r = await api(`/rest/v1/pieces_public?select=${PUBLIC_COLS}&n=gt.${maxN}&order=n.asc&limit=500`);
+      const since = lastShown ? `&shown_at=gt.${encodeURIComponent(lastShown)}` : '';
+      const r = await api(`/rest/v1/pieces_public?select=${PUBLIC_COLS}${since}&order=shown_at.asc&limit=500`);
       if (!r.length) return [];
       const have = new Map(cache.map(p => [p.n, p]));
       const fresh = r.filter(x => { const old = have.get(x.n); if (old) { Object.assign(old, x, { pending: false }); return false; } return true; });
       cache = merge(cache.filter(p => !p.pending).concat(fresh));
-      maxN = Math.max(maxN, ...r.map(x => x.n));
+      lastShown = r.reduce((m, x) => (x.shown_at > m ? x.shown_at : m), lastShown);
       return fresh;
     },
     list() { return cache; },

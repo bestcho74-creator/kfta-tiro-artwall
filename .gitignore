@@ -7,3 +7,7 @@ _old/
 # 원본 캐릭터 시트 (배포 불필요)
 tiro_sheet.png
 tiro_front.png
+
+# Supabase 로컬 작업 파일
+supabase/.temp/
+supabase/.branches/
