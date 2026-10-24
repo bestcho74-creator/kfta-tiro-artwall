@@ -25,8 +25,6 @@
     { id: 4, name: '낮 · 반가운 응원', ink: '#315E62' },
   ];
 
-  const REGIONS = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
-  const WEIGHT = [14, 7, 5, 6, 3, 3, 2, 2, 20, 3, 3, 4, 3, 3, 5, 6, 1];
 
   // 예시 응원 문장 (미리보기용)
   const MESSAGES = [
@@ -67,14 +65,13 @@
   const NICKS = ['국어쌤', '3학년 담임', '수학하는 티로', '보건실 지킴이', '진로쌤', '칠판지기', '분필요정', '봄날의 교실', '응원단장', '티로팬', '1교시 지킴이', '교무실 커피', '종례는 짧게', '영어샘', '과학 선생님', '체육쌤', '음악샘', '미술쌤', '사서샘', '상담 선생님', '특수교사', '영양 선생님', '고3 부장', '초등 담임', '중등 국어', '한문쌤'];
 
   const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-  const pickW = (r, w) => { let s = w.reduce((a, b) => a + b, 0), x = r() * s; for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
 
   function demoPieces() {
     if (!CONFIG.demo) return [];
     const r = rng(2026), out = [];
     for (let i = 1; i <= CONFIG.demoCount; i++) {
-      const region = REGIONS[pickW(r, WEIGHT)], nick = NICKS[Math.floor(r() * NICKS.length)], msg = MESSAGES[Math.floor(r() * MESSAGES.length)];
-      out.push({ n: i, region, nick, msg, card: 1 + Math.floor(r() * 4), demo: true });
+      const nick = NICKS[Math.floor(r() * NICKS.length)], msg = MESSAGES[Math.floor(r() * MESSAGES.length)];
+      out.push({ n: i, nick, msg, card: 1 + Math.floor(r() * 4), demo: true });
     }
     return out;
   }
@@ -102,7 +99,7 @@
     }
     return res.status === 204 ? null : res.json();
   }
-  const PUBLIC_COLS = 'n,card,msg,region,nick,shown_at';
+  const PUBLIC_COLS = 'n,card,msg,nick,shown_at';
 
   let cache = [], lastShown = '', lastFull = 0;   // lastShown: 가장 최근 공개 시각
   // 내 응원(이 기기에서 보낸 것) 합치기: 검수 대기 중이어도 내 화면에는 보임
@@ -164,12 +161,12 @@
     // 응원 보내기
     async add(p) {
       if (!REMOTE) {
-        const mine = load(); mine.push({ region: p.region, nick: p.nick, msg: p.msg, card: p.card || 1, prize: !!p.prize, sns: !!p.sns, youtube: !!p.youtube, at: Date.now() }); save(mine);
+        const mine = load(); mine.push({ nick: p.nick, msg: p.msg, card: p.card || 1, prize: !!p.prize, sns: !!p.sns, youtube: !!p.youtube, at: Date.now() }); save(mine);
         await Store.load(); return cache[cache.length - 1];
       }
-      const r = await api('/rest/v1/rpc/submit_piece', { method: 'POST', body: JSON.stringify({ p_card: p.card, p_msg: p.msg, p_region: p.region, p_nick: p.nick, p_phone: p.phone || null, p_sns: p.sns || null, p_youtube: p.youtube || null, p_prize: !!p.prize }) });
+      const r = await api('/rest/v1/rpc/submit_piece', { method: 'POST', body: JSON.stringify({ p_card: p.card, p_msg: p.msg, p_region: null, p_nick: p.nick, p_phone: p.phone || null, p_sns: p.sns || null, p_youtube: p.youtube || null, p_prize: !!p.prize }) });
       // 이 기기에는 확인용 값과 응모 여부만 남김 (전화번호 · SNS 아이디는 저장하지 않음)
-      const piece = { n: r.n, card: p.card, msg: p.msg, region: p.region, nick: p.nick, status: r.status, prize: !!p.prize, sns: !!p.sns, youtube: !!p.youtube, at: Date.now() };
+      const piece = { n: r.n, card: p.card, msg: p.msg, nick: p.nick, status: r.status, prize: !!p.prize, sns: !!p.sns, youtube: !!p.youtube, at: Date.now() };
       const mine = load(); mine.push(Object.assign({ token: r.token }, piece)); save(mine);
       cache = merge(cache.filter(x => !x.pending));
       return cache.find(x => x.n === r.n) || Object.assign(piece, { mine: true, pending: r.status !== 'approved' });
@@ -257,5 +254,5 @@
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  Object.assign(global, { KFTA: { CONFIG, CARDS, REGIONS, errorText, samplePieces, badWord, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
+  Object.assign(global, { KFTA: { CONFIG, CARDS, errorText, samplePieces, badWord, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
 })(window);

@@ -39,10 +39,6 @@
 .jx-chips button{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);border-radius:999px;padding:7px 12px;font:600 13px/1.2 'Pretendard Variable',Pretendard,sans-serif;cursor:pointer}
 .jx-chips button:hover{border-color:#FFD39A;color:#fff}
 .jx-label{font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin:4px 0 8px}
-.jx-regions{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.jx-regions button{height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;font:700 14px/1.2 'Pretendard Variable',Pretendard,sans-serif;cursor:pointer;transition:all .15s}
-.jx-regions button:hover{border-color:rgba(255,255,255,.45)}
-.jx-regions button.on{background:#fff;color:#14306E;border-color:#fff;box-shadow:0 6px 20px rgba(98,195,255,.45)}
 .jx-field{display:flex;flex-direction:column;gap:6px;margin-top:16px}
 .jx-field span{font-size:13px;font-weight:700;color:rgba(255,255,255,.8)}
 .jx-field input{width:100%;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:13px 14px;font:500 16px 'Pretendard Variable',Pretendard,sans-serif;color:#fff;outline:none;box-sizing:border-box}
@@ -85,6 +81,5 @@
 
 @media (max-width:560px){
   .jx-sheet{padding:22px 16px 18px;border-radius:24px}
-  .jx-regions{grid-template-columns:repeat(5,1fr)}
   .jx h3{font-size:21px}
 }

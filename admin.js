@@ -6,7 +6,6 @@
 (function () {
   'use strict';
   const K = window.KFTA || {};
-  const REGIONS = K.REGIONS || ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
   const BE = window.KFTA_BACKEND || {};
   const BASE = String(BE.url || '').trim().replace(/\/+$/, '');
   const ANON = String(BE.anonKey || '').trim();
@@ -19,7 +18,7 @@
   const ASK = { approved: '공개할까요', hidden: '숨길까요', pending: '검수 대기로 돌릴까요' };
   const TAB_FILE = { pending: '검수대기', approved: '공개', hidden: '숨김', all: '전체' };
   // 불러올 칸 (owner_token · ip_hash 제외)
-  const COLS = 'n,card,msg,region,nick,phone,sns_id,sns_checked,youtube_id,youtube_checked,prize,status,created_at,reviewed_at,reviewed_by';
+  const COLS = 'n,card,msg,nick,phone,sns_id,sns_checked,youtube_id,youtube_checked,prize,status,created_at,reviewed_at,reviewed_by';
   const CHK = { sns_checked: 'SNS 팔로우 확인', youtube_checked: '유튜브 구독 확인' };
 
   const $ = s => document.querySelector(s);
@@ -67,7 +66,7 @@
   let dupMaps = { phone: new Map(), sns: new Map(), yt: new Map() };   // 휴대전화 · SNS · 유튜브별 건수 (중복 의심 표시)
   let settings = null;
   const sel = new Set();     // 선택한 번호
-  const F = { tab: 'pending', region: '', extra: '', q: '', qd: '' };   // qd: 숫자만 (휴대전화 하이픈 무시 검색)
+  const F = { tab: 'pending', extra: '', q: '', qd: '' };   // qd: 숫자만 (휴대전화 하이픈 무시 검색)
   let view = [];             // 현재 필터 결과
   let shown = STEP;
   let lastPick = -1;         // Shift 범위 선택 기준
@@ -401,7 +400,6 @@
   /* ===================== 필터 ===================== */
   function matches(p) {
     if (F.tab !== 'all' && p.status !== F.tab) return false;
-    if (F.region && p.region !== F.region) return false;
     switch (F.extra) {
       case 'prize': if (!p.prize) return false; break;
       case 'prize_nophone': if (!p.prize || str(p.phone)) return false; break;
@@ -458,7 +456,7 @@
   }
 
   function cardOf(p) {
-    const d = { card: p.card, msg: p.msg, region: p.region, nick: p.nick };
+    const d = { card: p.card, msg: p.msg, nick: p.nick };
     try { if (K.cardEl) return K.cardEl(d); } catch (e) {}
     const el = document.createElement('div');   // join.js가 없을 때 대신 보여 줄 글 상자
     el.style.cssText = 'aspect-ratio:1;border-radius:10px;background:#EAF2FF;color:#16325C;font:700 11px/1.4 var(--serif);padding:8px;overflow:hidden;display:grid;place-items:center;text-align:center';
@@ -492,7 +490,6 @@
       <div class="info">
         <div class="rl1">
           <b class="no">${no}</b><span class="bd ${esc(p.status)}">${esc(ST[p.status] || p.status)}</span>
-          <span class="rg">${esc(p.region)}교총</span>
           <span class="tm" title="${esc(kst(p.created_at, true))} (KST)">${esc(kst(p.created_at))}</span>
           ${dupHtml(dup)}
         </div>
@@ -516,7 +513,7 @@
 
   function emptyText() {
     if (!items.length) return lastLoad ? '아직 들어온 응원이 없습니다.' : '불러오는 중…';
-    if (F.q || F.region || F.extra) return '조건에 맞는 응원이 없습니다.';
+    if (F.q || F.extra) return '조건에 맞는 응원이 없습니다.';
     return { pending: '검수를 기다리는 응원이 없습니다 ✓', approved: '공개된 응원이 없습니다.', hidden: '숨긴 응원이 없습니다.', all: '응원이 없습니다.' }[F.tab];
   }
 
@@ -603,7 +600,7 @@
     box.textContent = '';
     box.appendChild(cardOf(p));
     const or = v => esc(str(v) || '–');
-    $('#bigMeta').innerHTML = `<b>No.${esc(pad(p.n))}</b> · ${esc(ST[p.status] || p.status)} · ${esc(p.region)}교총 · 닉네임 <b>${esc(p.nick)}</b>`
+    $('#bigMeta').innerHTML = `<b>No.${esc(pad(p.n))}</b> · ${esc(ST[p.status] || p.status)} · 닉네임 <b>${esc(p.nick)}</b>`
       + `<br>휴대전화 ${or(p.phone)} · SNS ${or(p.sns_id)}${p.sns_checked ? ' ✓' : ''} · 유튜브 ${or(p.youtube_id)}${p.youtube_checked ? ' ✓' : ''}`
       + `<br>경품 응모 ${p.prize ? 'Y' : 'N'} · 추첨 기회 ${tix(p)}회 · ${esc(kst(p.created_at, true))} (KST)`;
     $('#bigActs').innerHTML = ['approved', 'hidden', 'pending'].map(s => `<button type="button" class="btn sm ${s === 'approved' ? 'ok' : s === 'hidden' ? 'hid' : 'ghost'}" data-s="${s}"${p.status === s ? ' disabled' : ''}>${s === 'pending' ? '대기로' : ST[s]}</button>`).join('');
@@ -634,9 +631,9 @@
   function exportCSV() {
     if (!view.length) { toast('내보낼 응원이 없습니다.', 'err'); return; }
     const yn = v => v ? 'Y' : 'N';
-    const head = ['n', 'status', 'region', 'nick', 'phone', 'sns_id', 'sns_checked', 'youtube_id', 'youtube_checked', 'prize', 'tickets', 'msg', 'created_at(KST)', 'reviewed_at(KST)', 'reviewed_by'];
-    const rows = view.map(p => [p.n, p.status, p.region, str(p.nick), str(p.phone), snsCell(p), yn(p.sns_checked), idCell(p.youtube_id), yn(p.youtube_checked), yn(p.prize), tix(p), p.msg, kst(p.created_at, true), kst(p.reviewed_at, true), p.reviewed_by || '']);
-    download(`티로아트월_${TAB_FILE[F.tab]}${F.region ? '_' + F.region : ''}_${stamp()}.csv`, toCSV([head, ...rows]));
+    const head = ['n', 'status', 'nick', 'phone', 'sns_id', 'sns_checked', 'youtube_id', 'youtube_checked', 'prize', 'tickets', 'msg', 'created_at(KST)', 'reviewed_at(KST)', 'reviewed_by'];
+    const rows = view.map(p => [p.n, p.status, str(p.nick), str(p.phone), snsCell(p), yn(p.sns_checked), idCell(p.youtube_id), yn(p.youtube_checked), yn(p.prize), tix(p), p.msg, kst(p.created_at, true), kst(p.reviewed_at, true), p.reviewed_by || '']);
+    download(`티로아트월_${TAB_FILE[F.tab]}_${stamp()}.csv`, toCSV([head, ...rows]));
     toast(`${num(view.length)}건을 CSV로 저장했습니다.`);
   }
 
@@ -702,8 +699,8 @@
     const table = (title, list) => {
       const np = list.filter(w => noPhone(w.p)).length;
       return `<h4>${esc(title)}<small>${num(list.length)}명</small>${np ? `<small class="warnc">연락처 없음 ${num(np)}명</small>` : ''}</h4>
-      <div class="tblwrap"><table class="tbl"><thead><tr><th>순번</th><th>No.</th><th>소속</th><th>닉네임</th><th>휴대전화</th><th>SNS 팔로우 아이디</th><th>유튜브 구독 아이디</th><th>추첨 기회</th><th>비고</th></tr></thead><tbody>${
-        list.map((w, i) => `<tr><td>${i + 1}</td><td>${esc(pad(w.p.n))}</td><td>${esc(w.p.region)}교총</td><td><b>${esc(w.p.nick)}</b></td><td>${or(w.p.phone)}</td><td>${igOf(w.p) ? '@' + esc(igOf(w.p)) : or(w.p.sns_id)}</td><td>${or(w.p.youtube_id)}</td><td${w.t > 1 ? ' class="t2"' : ''}>${w.t}회</td><td${noPhone(w.p) ? ' class="warnc"' : ''}>${esc(noteOf(w.p))}</td></tr>`).join('')
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>순번</th><th>No.</th><th>닉네임</th><th>휴대전화</th><th>SNS 팔로우 아이디</th><th>유튜브 구독 아이디</th><th>추첨 기회</th><th>비고</th></tr></thead><tbody>${
+        list.map((w, i) => `<tr><td>${i + 1}</td><td>${esc(pad(w.p.n))}</td><td><b>${esc(w.p.nick)}</b></td><td>${or(w.p.phone)}</td><td>${igOf(w.p) ? '@' + esc(igOf(w.p)) : or(w.p.sns_id)}</td><td>${or(w.p.youtube_id)}</td><td${w.t > 1 ? ' class="t2"' : ''}>${w.t}회</td><td${noPhone(w.p) ? ' class="warnc"' : ''}>${esc(noteOf(w.p))}</td></tr>`).join('')
       }</tbody></table></div>`;
     };
     out.innerHTML = `<p class="dmeta">추첨 시각 ${esc(kst(draw.at, true))} (KST) · 대상 ${num(draw.pool)}건 · 추첨 기회 합계 ${num(draw.tickets)}회</p>`
@@ -712,9 +709,9 @@
   }
   function drawCSV() {
     if (!draw) return;
-    const head = ['구분', '순번', 'n', 'region', 'nick', 'phone', 'sns_id', 'youtube_id', 'tickets', 'note', 'drawn_at(KST)'];
+    const head = ['구분', '순번', 'n', 'nick', 'phone', 'sns_id', 'youtube_id', 'tickets', 'note', 'drawn_at(KST)'];
     const at = kst(draw.at, true);
-    const line = (kind, w, i) => [kind, i + 1, w.p.n, w.p.region, str(w.p.nick), str(w.p.phone), snsCell(w.p), idCell(w.p.youtube_id), w.t, noteOf(w.p), at];
+    const line = (kind, w, i) => [kind, i + 1, w.p.n, str(w.p.nick), str(w.p.phone), snsCell(w.p), idCell(w.p.youtube_id), w.t, noteOf(w.p), at];
     const rows = [];
     draw.w1.forEach((w, i) => rows.push(line('1차 당첨', w, i)));
     draw.w2.forEach((w, i) => rows.push(line('특별 경품', w, i)));
@@ -767,8 +764,6 @@
       const b = e.target.closest('button[data-tab]');
       if (b) setTab(b.dataset.tab);
     });
-    $('#fRegion').innerHTML = '<option value="">전체 지역</option>' + REGIONS.map(r => `<option value="${esc(r)}">${esc(r)}교총</option>`).join('');
-    $('#fRegion').addEventListener('change', e => { F.region = e.target.value; filterChanged(); });
     $('#fExtra').addEventListener('change', e => { F.extra = e.target.value; filterChanged(); });
     let qt = 0;
     $('#fQ').addEventListener('input', e => {

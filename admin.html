@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261024d">
+<link rel="stylesheet" href="join.css?v=20261024e">
 <style>
 /* 티로 아트월 · 관리자 (검수 · 경품 추첨) — 아트월과 같은 남색 유리 UI */
 :root{--navy:#14306E;--navy2:#0B1D4D;--blue:#1F5FD0;--blue2:#3D8BFF;--sky:#62C3FF;--gold:#FFD39A;--gold2:#FFB866;--mint:#86E3B8;--rose:#FF9C9C;
@@ -148,7 +148,6 @@ body.has-sel .wrap{padding-bottom:120px}
 .bd.pending{background:rgba(255,211,154,.15);color:var(--gold);border-color:rgba(255,211,154,.42)}
 .bd.approved{background:rgba(134,227,184,.14);color:var(--mint);border-color:rgba(134,227,184,.4)}
 .bd.hidden{background:rgba(255,255,255,.08);color:var(--faint);border-color:var(--line)}
-.rg{font-weight:700;color:var(--dim)}
 .tm{color:var(--faint);font-variant-numeric:tabular-nums}
 .dupb{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:800;background:rgba(255,184,102,.2);color:#FFC98A}
 .msg{margin:0;font:700 15.5px/1.6 var(--serif);color:#fff;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -340,7 +339,6 @@ dialog.dlg[open] .sheet{animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
         <button type="button" role="tab" data-tab="hidden">숨김<em></em></button>
         <button type="button" role="tab" data-tab="all">전체<em></em></button>
       </div>
-      <select id="fRegion" aria-label="소속 교총"></select>
       <select id="fExtra" aria-label="추가 조건">
         <option value="">조건 없음</option>
         <option value="prize">경품 응모</option>
@@ -424,10 +422,10 @@ dialog.dlg[open] .sheet{animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <noscript><p style="text-align:center;padding:40px">이 화면은 자바스크립트가 필요합니다.</p></noscript>
 
-<script src="config.js?v=20261024d"></script>
-<script src="assets.js?v=20261024d"></script>
-<script src="data.js?v=20261024d"></script>
-<script src="join.js?v=20261024d"></script>
-<script src="admin.js?v=20261024d"></script>
+<script src="config.js?v=20261024e"></script>
+<script src="assets.js?v=20261024e"></script>
+<script src="data.js?v=20261024e"></script>
+<script src="join.js?v=20261024e"></script>
+<script src="admin.js?v=20261024e"></script>
 </body>
 </html>

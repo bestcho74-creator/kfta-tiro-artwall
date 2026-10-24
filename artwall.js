@@ -417,7 +417,7 @@
         g.fillStyle = '#FFD3EA'; g.font = `800 ${s * 0.1}px Pretendard, sans-serif`; g.textBaseline = 'top';
         g.fillText('No.' + String(p.n).padStart(4, '0'), x + s * 0.08, y + s * 0.08);
         g.fillStyle = 'rgba(255,255,255,.85)'; g.font = `600 ${s * 0.085}px Pretendard, sans-serif`; g.textBaseline = 'bottom';
-        g.fillText(p.region + '교총 · ' + p.nick, x + s * 0.08, y + s * 0.92);
+        g.fillText(p.nick, x + s * 0.08, y + s * 0.92);
         if (s > 150) {
           g.fillStyle = '#fff'; g.font = `700 ${s * 0.085}px "Gowun Batang", serif`; g.textBaseline = 'top';
           wrap(g, p.msg, s * 0.84).slice(0, 5).forEach((l, i) => g.fillText(l, x + s * 0.08, y + s * 0.25 + i * s * 0.115));
@@ -529,7 +529,7 @@
   const tip = $('#tip');
   function hover(x, y) {
     const h = hit(x, y);
-    if (h && h.p) { tip.innerHTML = `<b>No.${String(h.p.n).padStart(4, '0')}</b>${h.p.region}교총 · ${esc(h.p.nick)}`; tip.style.left = x + 'px'; tip.style.top = y + 'px'; tip.classList.add('on'); cv.classList.add('hover'); }
+    if (h && h.p) { tip.innerHTML = `<b>No.${String(h.p.n).padStart(4, '0')}</b>${esc(h.p.nick)}`; tip.style.left = x + 'px'; tip.style.top = y + 'px'; tip.classList.add('on'); cv.classList.add('hover'); }
     else { tip.classList.remove('on'); cv.classList.remove('hover'); }
   }
   cv.addEventListener('pointerleave', () => tip.classList.remove('on'));
@@ -658,7 +658,7 @@
     g.fillStyle = '#fff'; rr(g, 100, 580, 880, 880, 40); g.fill(); g.restore();
     KFTA.drawCard(g, p, 100, 580, 880);
     g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '600 32px Pretendard, sans-serif';
-    g.fillText(p.region + '교총 · ' + p.nick + ' · 조각 ' + posText(p), W / 2, 1560);
+    g.fillText(p.nick + ' · 조각 ' + posText(p), W / 2, 1560);
     g.fillStyle = 'rgba(255,255,255,.7)'; g.font = '600 30px Pretendard, sans-serif';
     g.fillText('수능 전날 11월 18일, 완성 작품 공개', W / 2, 1620);
     // 필수 해시태그

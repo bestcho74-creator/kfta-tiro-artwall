@@ -1,13 +1,13 @@
 /* 메시지 카드 · 응원 남기기 (메인 · 아트월 공용)
-   ① 카드 4종 중 고르기 → ② 카드 위에 바로 응원 쓰기 → ③ 소속 교총 · 닉네임 · 경품 응모(선택) → 보내기 */
+   ① 카드 4종 중 고르기 → ② 카드 위에 바로 응원 쓰기 → ③ 닉네임 · 경품 응모(선택) → 보내기 */
 (function (global) {
-  const { CARDS, REGIONS, Store } = global.KFTA;
+  const { CARDS, Store } = global.KFTA;
   const SRC = global.ASSETS.cards;
   const MAX = 100;
   const NICK_EX = ['국어쌤', '3학년 담임', '수학하는 티로', '보건실 지킴이', '응원단장'];   // 닉네임 예시
 
   const sizeClass = n => n <= 24 ? 'l1' : n <= 50 ? 'l2' : n <= 80 ? 'l3' : 'l4';
-  const signOf = p => (p.region ? p.region + '교총' : '소속 교총') + ' · ' + (p.nick || '닉네임');
+  const signOf = p => p.nick || '닉네임';
 
   // 카드 한 장 (HTML)
   function cardEl(p, opts = {}) {
@@ -92,10 +92,8 @@
   </section>
   <section data-s="3" hidden>
     <div class="jx-step">STEP 3 · 보내는 선생님</div>
-    <h3>소속과 닉네임을 적어 주세요</h3>
-    <div class="jx-mini"><div id="jxMini"></div><p>카드 아래에 <b>소속 교총 · 닉네임</b>이 그대로 표시됩니다.</p></div>
-    <div class="jx-label">소속 시·도교총</div>
-    <div class="jx-regions">${REGIONS.map(r => `<button type="button">${r}</button>`).join('')}</div>
+    <h3>닉네임을 적어 주세요</h3>
+    <div class="jx-mini"><div id="jxMini"></div><p>카드 아래에 <b>닉네임</b>이 그대로 표시됩니다.</p></div>
     <label class="jx-field"><span>닉네임 · 아트월에 공개 (2~12자)</span><input id="jxNick" maxlength="12" autocomplete="off" spellcheck="false" placeholder="예) 국어쌤, 3학년 담임, 티로팬"></label>
     <div class="jx-chips jx-nicks" aria-label="닉네임 예시">${NICK_EX.map(n => `<button type="button">${n}</button>`).join('')}</div>
     <p class="jx-help" id="jxNickHelp">욕설이나 나쁜 의미가 담긴 닉네임은 쓸 수 없어요.</p>
@@ -107,7 +105,7 @@
       <p class="jx-help">SNS 팔로우와 유튜브 구독이 확인되면 추첨 기회가 1회씩 늘어나 당첨 확률이 높아집니다 (최대 3회). 입력한 정보는 공개되지 않고 경품 추첨과 발송에만 쓰입니다.</p>
     </div>
     <div class="jx-cons">
-      <label class="jx-check"><input type="checkbox" id="jxC1"><span><b>[필수]</b> 소속 교총 · 닉네임 · 응원 메시지가 아트월에 공개되는 것에 동의합니다.</span></label>
+      <label class="jx-check"><input type="checkbox" id="jxC1"><span><b>[필수]</b> 닉네임 · 응원 메시지가 아트월에 공개되는 것에 동의합니다.</span></label>
       <label class="jx-check"><input type="checkbox" id="jxC3"><span><b>[선택]</b> 경품 추첨에 응모하며, 위에 적은 휴대전화 번호 · SNS · 유튜브 아이디를 추첨과 경품 발송에만 쓰는 것에 동의합니다. (이벤트 종료 후 파기)</span></label>
     </div>
     <div class="jx-row"><button class="jx-btn jx-ghost" type="button" data-go="2">이전</button><button class="jx-btn jx-main" type="button" id="jxSend" disabled>응원 보내기 ✦</button></div>
@@ -130,10 +128,6 @@
       if (e.target.tagName !== 'BUTTON') return;
       state.msg = e.target.textContent; renderPreview(); validate();
     });
-    $('.jx-regions').addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      state.region = e.target.textContent; mark(); renderMini(); validate();
-    });
     $('#jxNick').addEventListener('input', () => { state.nick = $('#jxNick').value.replace(/\s+/g, ' ').trimStart(); renderMini(); validate(); });
     $('.jx-nicks').addEventListener('click', e => {
       if (e.target.tagName !== 'BUTTON') return;
@@ -152,9 +146,8 @@
   }
   function mark() {
     dlg.querySelectorAll('.jx-pick').forEach(b => b.classList.toggle('on', +b.dataset.card === state.card));
-    dlg.querySelectorAll('.jx-regions button').forEach(b => b.classList.toggle('on', b.textContent === state.region));
   }
-  const draft = () => ({ card: state.card, msg: state.msg, region: state.region, nick: state.nick.trim() });
+  const draft = () => ({ card: state.card, msg: state.msg, nick: state.nick.trim() });
   function renderPreview() {
     const box = $('#jxPrev'); box.innerHTML = '';
     const el = cardEl(draft(), { editable: true });
@@ -191,7 +184,7 @@
     $('#jxPhone').classList.toggle('bad', !phoneOk);
     const needConsent = prizeFilled() && !$('#jxC3').checked;
     $('#jxC3').closest('.jx-check').classList.toggle('need', needConsent);
-    $('#jxSend').disabled = !(state.region && nick.length >= 2 && !nickBad && phoneOk && !needConsent && $('#jxC1').checked && state.msg.trim().length >= 2 && !msgBad);
+    $('#jxSend').disabled = !(nick.length >= 2 && !nickBad && phoneOk && !needConsent && $('#jxC1').checked && state.msg.trim().length >= 2 && !msgBad);
   }
   function go(n) {
     dlg.querySelectorAll('[data-s]').forEach(s => s.hidden = +s.dataset.s !== n);
@@ -205,7 +198,7 @@
     btn.disabled = true; btn.textContent = '보내는 중…'; err.hidden = true;
     try {
       const prize = $('#jxC3').checked, sns = $('#jxSns').value.trim(), youtube = $('#jxYt').value.trim(), phone = phoneDigits();
-      const p = await Store.add({ card: state.card, msg: state.msg.trim().replace(/[ \t]+/g, ' '), region: state.region, nick: state.nick.trim(), phone: prize ? phone : '', sns: prize ? sns : '', youtube: prize ? youtube : '', prize });
+      const p = await Store.add({ card: state.card, msg: state.msg.trim().replace(/[ \t]+/g, ' '), nick: state.nick.trim(), phone: prize ? phone : '', sns: prize ? sns : '', youtube: prize ? youtube : '', prize });
       const from = $('#jxPrev .mcard') || $('#jxMini .mcard');
       dlg.close();
       if (onDoneCb) onDoneCb(p, { prize, sns: prize && !!sns, youtube: prize && !!youtube, from });
@@ -219,7 +212,7 @@
   function openJoin(opts = {}) {
     if (!dlg) build();
     onDoneCb = opts.onDone || null;
-    state = { card: 0, msg: '', region: '', nick: '' };
+    state = { card: 0, msg: '', nick: '' };
     ['#jxNick', '#jxPhone', '#jxSns', '#jxYt'].forEach(id => $(id).value = ''); ['#jxC1', '#jxC3'].forEach(id => $(id).checked = false);
     $('#jxErr').hidden = true;
     mark(); go(1); dlg.showModal();

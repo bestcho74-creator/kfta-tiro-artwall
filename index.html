@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261024d">
+<link rel="stylesheet" href="join.css?v=20261024e">
 <style>
 @font-face{font-family:'Paperlogy';font-weight:500;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2) format('woff2')}
 @font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format('woff2')}
@@ -47,11 +47,11 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
 </div>
 <div id="stage"></div>
 
-<script src="config.js?v=20261024d"></script>
-<script src="assets.js?v=20261024d"></script>
-<script src="data.js?v=20261024d"></script>
-<script src="qm-engine.js?v=20261024d"></script>
-<script src="join.js?v=20261024d"></script>
+<script src="config.js?v=20261024e"></script>
+<script src="assets.js?v=20261024e"></script>
+<script src="data.js?v=20261024e"></script>
+<script src="qm-engine.js?v=20261024e"></script>
+<script src="join.js?v=20261024e"></script>
 <script>
 (async function () {
   const { CONFIG: SITE, Store, dday, keyedTiro, rng, getTheme, setTheme } = KFTA;
@@ -108,7 +108,7 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
     const S0 = lgBase(api);
     const BODY = S0.tall ? '선생님의 한마디가 한 조각이 되어 티로를 완성합니다. 수능 전날 11월 18일 공개.' : '선생님의 한마디가 하나의 조각이 되어 티로를 완성합니다. 수능 전날인 11월 18일, 전국 교총 회원의 응원이 한 작품으로 공개됩니다.';
     const BUTTON = '미디어아트 입장';
-    const CARDS = SHOW.map(p => p.sample ? ['예시 응원', p.region + '교총'] : [p.nick, p.region + '교총 · 응원 ' + String(p.n).padStart(4, '0')]);
+    const CARDS = SHOW.map(p => p.sample ? ['예시 응원', p.nick] : [p.nick, '응원 ' + String(p.n).padStart(4, '0')]);
     const SLOW = 0.3, LOOP = 24;
     const lp = lpKit(api), S = lgBase(api), W = S.W, H = S.H, u = S.u;
     const face = lp.face('Paperlogy'), small = lp.face('Pretendard Variable'), fg = api.fg;
