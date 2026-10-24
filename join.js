@@ -1,14 +1,13 @@
 /* 메시지 카드 · 응원 남기기 (메인 · 아트월 공용)
-   ① 카드 4종 중 고르기 → ② 카드 위에 바로 응원 쓰기 → ③ 소속 교총 · 홈페이지 아이디 → 보내기 */
+   ① 카드 4종 중 고르기 → ② 카드 위에 바로 응원 쓰기 → ③ 소속 교총 · 닉네임 · 경품 응모(선택) → 보내기 */
 (function (global) {
   const { CARDS, REGIONS, Store } = global.KFTA;
   const SRC = global.ASSETS.cards;
   const MAX = 100;
+  const NICK_EX = ['국어쌤', '3학년 담임', '수학하는 티로', '보건실 지킴이', '응원단장'];   // 닉네임 예시
 
-  // 아트월 · 사이니지에는 아이디 앞 3자리만 공개
-  const maskId = id => { id = String(id || '').trim(); return id.length <= 3 ? id.slice(0, 1) + '**' : id.slice(0, 3) + '*'.repeat(Math.min(4, id.length - 3)); };
   const sizeClass = n => n <= 24 ? 'l1' : n <= 50 ? 'l2' : n <= 80 ? 'l3' : 'l4';
-  const signOf = p => (p.region ? p.region + '교총' : '소속 교총') + ' · ' + (p.nick || '아이디');
+  const signOf = p => (p.region ? p.region + '교총' : '소속 교총') + ' · ' + (p.nick || '닉네임');
 
   // 카드 한 장 (HTML)
   function cardEl(p, opts = {}) {
@@ -85,23 +84,31 @@
       <button type="button">평소처럼, 연습한 그대로! 넌 할 수 있어.</button>
       <button type="button">긴장되는 건 그만큼 준비했다는 뜻이에요.</button>
       <button type="button">선생님들이 시험장 밖에서 응원할게요.</button>
+      <button type="button">지금까지 쌓아 온 시간이 너를 지켜 줄 거야.</button>
+      <button type="button">시험장 문을 나서는 순간, 이미 충분히 잘 해낸 거예요.</button>
     </div>
+    <p class="jx-warn" id="jxMsgWarn" hidden>응원 메시지에 쓸 수 없는 표현이 있어요. 고운 말로 바꿔 주세요.</p>
     <div class="jx-row"><button class="jx-btn jx-ghost" type="button" data-go="1">이전</button><button class="jx-btn jx-main" type="button" id="jxTo3" disabled>다음</button></div>
   </section>
   <section data-s="3" hidden>
     <div class="jx-step">STEP 3 · 보내는 선생님</div>
-    <h3>소속과 아이디를 적어 주세요</h3>
-    <div class="jx-mini"><div id="jxMini"></div><p>카드 아래에 <b>소속 교총 · 아이디 앞 3자리</b>가 함께 표시됩니다.</p></div>
+    <h3>소속과 닉네임을 적어 주세요</h3>
+    <div class="jx-mini"><div id="jxMini"></div><p>카드 아래에 <b>소속 교총 · 닉네임</b>이 그대로 표시됩니다.</p></div>
     <div class="jx-label">소속 시·도교총</div>
     <div class="jx-regions">${REGIONS.map(r => `<button type="button">${r}</button>`).join('')}</div>
-    <label class="jx-field"><span>한국교총 홈페이지 아이디</span><input id="jxId" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="교총 홈페이지에 가입한 아이디"></label>
-    <p class="jx-help">회원 확인과 경품 추첨에만 쓰이며, 아트월에는 앞 3자리만 보입니다. (예: kft***)</p>
-    <label class="jx-field"><span>인스타그램 아이디 (선택)</span><input id="jxInsta" maxlength="30" autocapitalize="off" spellcheck="false" placeholder="@아이디"></label>
-    <p class="jx-help">한국교총 인스타그램 이벤트 게시물에 댓글을 남기면 추가 추첨 기회 1회를 드려요. 공개되지 않습니다.</p>
+    <label class="jx-field"><span>닉네임 · 아트월에 공개 (2~12자)</span><input id="jxNick" maxlength="12" autocomplete="off" spellcheck="false" placeholder="예) 국어쌤, 3학년 담임, 티로팬"></label>
+    <div class="jx-chips jx-nicks" aria-label="닉네임 예시">${NICK_EX.map(n => `<button type="button">${n}</button>`).join('')}</div>
+    <p class="jx-help" id="jxNickHelp">욕설이나 나쁜 의미가 담긴 닉네임은 쓸 수 없어요.</p>
+    <div class="jx-prize">
+      <div class="jx-prize-h"><b>경품 응모 (선택)</b><span>채워 넣을수록 당첨 확률이 높아져요</span></div>
+      <label class="jx-field"><span>휴대전화 번호 · 경품 발송용</span><input id="jxPhone" type="tel" inputmode="numeric" maxlength="13" autocomplete="tel" placeholder="010-0000-0000"></label>
+      <label class="jx-field"><span>한국교총 SNS 팔로우 아이디 <em>당첨 확률 UP</em></span><input id="jxSns" maxlength="40" autocapitalize="off" spellcheck="false" placeholder="교총 SNS를 팔로우한 내 아이디 (@아이디)"></label>
+      <label class="jx-field"><span>한국교총 유튜브 구독 아이디 <em>당첨 확률 UP</em></span><input id="jxYt" maxlength="60" autocapitalize="off" spellcheck="false" placeholder="교총 유튜브를 구독한 내 채널명 (@핸들)"></label>
+      <p class="jx-help">SNS 팔로우와 유튜브 구독이 확인되면 추첨 기회가 1회씩 늘어나 당첨 확률이 높아집니다 (최대 3회). 입력한 정보는 공개되지 않고 경품 추첨과 발송에만 쓰입니다.</p>
+    </div>
     <div class="jx-cons">
-      <label class="jx-check"><input type="checkbox" id="jxC1"><span><b>[필수]</b> 소속 교총 · 아이디 일부 · 응원 메시지가 아트월에 공개되는 것에 동의합니다.</span></label>
-      <label class="jx-check"><input type="checkbox" id="jxC2"><span><b>[필수]</b> 회원 확인과 이벤트 운영을 위한 개인정보(아이디) 수집 · 이용에 동의합니다.</span></label>
-      <label class="jx-check"><input type="checkbox" id="jxC3"><span><b>[선택]</b> 경품 추첨에 응모합니다.</span></label>
+      <label class="jx-check"><input type="checkbox" id="jxC1"><span><b>[필수]</b> 소속 교총 · 닉네임 · 응원 메시지가 아트월에 공개되는 것에 동의합니다.</span></label>
+      <label class="jx-check"><input type="checkbox" id="jxC3"><span><b>[선택]</b> 경품 추첨에 응모하며, 위에 적은 휴대전화 번호 · SNS · 유튜브 아이디를 추첨과 경품 발송에만 쓰는 것에 동의합니다. (이벤트 종료 후 파기)</span></label>
     </div>
     <div class="jx-row"><button class="jx-btn jx-ghost" type="button" data-go="2">이전</button><button class="jx-btn jx-main" type="button" id="jxSend" disabled>응원 보내기 ✦</button></div>
     <p class="jx-err" id="jxErr" role="alert" hidden></p>
@@ -127,8 +134,19 @@
       if (e.target.tagName !== 'BUTTON') return;
       state.region = e.target.textContent; mark(); renderMini(); validate();
     });
-    $('#jxId').addEventListener('input', () => { state.id = $('#jxId').value.replace(/\s/g, ''); renderMini(); validate(); });
-    ['#jxC1', '#jxC2', '#jxC3'].forEach(id => $(id).addEventListener('change', validate));
+    $('#jxNick').addEventListener('input', () => { state.nick = $('#jxNick').value.replace(/\s+/g, ' ').trimStart(); renderMini(); validate(); });
+    $('.jx-nicks').addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') return;
+      $('#jxNick').value = state.nick = e.target.textContent; renderMini(); validate();
+    });
+    // 휴대전화: 숫자만 받아 010-0000-0000 꼴로
+    $('#jxPhone').addEventListener('input', () => {
+      const d = $('#jxPhone').value.replace(/\D/g, '').slice(0, 11);
+      $('#jxPhone').value = d.length <= 3 ? d : d.length <= 7 ? `${d.slice(0, 3)}-${d.slice(3)}` : d.length <= 10 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+      validate();
+    });
+    ['#jxSns', '#jxYt'].forEach(id => $(id).addEventListener('input', validate));
+    ['#jxC1', '#jxC3'].forEach(id => $(id).addEventListener('change', validate));
     $('#jxTo3').onclick = () => go(3);
     $('#jxSend').onclick = send;
   }
@@ -136,7 +154,7 @@
     dlg.querySelectorAll('.jx-pick').forEach(b => b.classList.toggle('on', +b.dataset.card === state.card));
     dlg.querySelectorAll('.jx-regions button').forEach(b => b.classList.toggle('on', b.textContent === state.region));
   }
-  const draft = () => ({ card: state.card, msg: state.msg, region: state.region, nick: state.id ? maskId(state.id) : '' });
+  const draft = () => ({ card: state.card, msg: state.msg, region: state.region, nick: state.nick.trim() });
   function renderPreview() {
     const box = $('#jxPrev'); box.innerHTML = '';
     const el = cardEl(draft(), { editable: true });
@@ -158,9 +176,22 @@
   }
   function placeCaret(el) { const r = document.createRange(); r.selectNodeContents(el); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
   function renderMini() { const m = $('#jxMini'); m.innerHTML = ''; m.appendChild(cardEl(draft())); }
+  // 입력 검사: 닉네임 2~12자 · 나쁜 말 없음, 메시지 나쁜 말 없음, 경품 칸을 채웠으면 응모 동의 필요
+  const phoneDigits = () => $('#jxPhone').value.replace(/\D/g, '');
+  const prizeFilled = () => !!(phoneDigits() || $('#jxSns').value.trim() || $('#jxYt').value.trim());
   function validate() {
-    $('#jxTo3').disabled = state.msg.trim().length < 2;
-    $('#jxSend').disabled = !(state.region && state.id.length >= 3 && $('#jxC1').checked && $('#jxC2').checked && state.msg.trim().length >= 2);
+    const msgBad = global.KFTA.badWord(state.msg, false);
+    $('#jxMsgWarn').hidden = !msgBad;
+    $('#jxTo3').disabled = state.msg.trim().length < 2 || msgBad;
+    const nick = state.nick.trim(), nickBad = global.KFTA.badWord(nick, true);
+    const help = $('#jxNickHelp');
+    help.classList.toggle('bad', nickBad);
+    help.textContent = nickBad ? '이 닉네임은 쓸 수 없어요. 다른 닉네임을 적어 주세요.' : '욕설이나 나쁜 의미가 담긴 닉네임은 쓸 수 없어요.';
+    const phoneOk = !phoneDigits() || /^01[016789]\d{7,8}$/.test(phoneDigits());
+    $('#jxPhone').classList.toggle('bad', !phoneOk);
+    const needConsent = prizeFilled() && !$('#jxC3').checked;
+    $('#jxC3').closest('.jx-check').classList.toggle('need', needConsent);
+    $('#jxSend').disabled = !(state.region && nick.length >= 2 && !nickBad && phoneOk && !needConsent && $('#jxC1').checked && state.msg.trim().length >= 2 && !msgBad);
   }
   function go(n) {
     dlg.querySelectorAll('[data-s]').forEach(s => s.hidden = +s.dataset.s !== n);
@@ -173,11 +204,11 @@
     const btn = $('#jxSend'), err = $('#jxErr');
     btn.disabled = true; btn.textContent = '보내는 중…'; err.hidden = true;
     try {
-      const prize = $('#jxC3').checked, insta = $('#jxInsta').value.trim();
-      const p = await Store.add({ card: state.card, msg: state.msg.trim().replace(/[ \t]+/g, ' '), region: state.region, nick: maskId(state.id), memberId: state.id, insta, prize });
+      const prize = $('#jxC3').checked, sns = $('#jxSns').value.trim(), youtube = $('#jxYt').value.trim(), phone = phoneDigits();
+      const p = await Store.add({ card: state.card, msg: state.msg.trim().replace(/[ \t]+/g, ' '), region: state.region, nick: state.nick.trim(), phone: prize ? phone : '', sns: prize ? sns : '', youtube: prize ? youtube : '', prize });
       const from = $('#jxPrev .mcard') || $('#jxMini .mcard');
       dlg.close();
-      if (onDoneCb) onDoneCb(p, { prize, insta: !!insta, from });
+      if (onDoneCb) onDoneCb(p, { prize, sns: prize && !!sns, youtube: prize && !!youtube, from });
     } catch (e) {
       err.textContent = global.KFTA.errorText(e); err.hidden = false;
       err.scrollIntoView({ block: 'nearest' });
@@ -188,8 +219,8 @@
   function openJoin(opts = {}) {
     if (!dlg) build();
     onDoneCb = opts.onDone || null;
-    state = { card: 0, msg: '', region: '', id: '' };
-    $('#jxId').value = ''; $('#jxInsta').value = ''; ['#jxC1', '#jxC2', '#jxC3'].forEach(id => $(id).checked = false);
+    state = { card: 0, msg: '', region: '', nick: '' };
+    ['#jxNick', '#jxPhone', '#jxSns', '#jxYt'].forEach(id => $(id).value = ''); ['#jxC1', '#jxC3'].forEach(id => $(id).checked = false);
     $('#jxErr').hidden = true;
     mark(); go(1); dlg.showModal();
   }
@@ -209,5 +240,5 @@
     setTimeout(() => { location.href = url; }, 1900);
   }
 
-  Object.assign(global.KFTA, { maskId, cardEl, drawCard, cardsReady: ready, openJoin, sendAway, signOf });
+  Object.assign(global.KFTA, { cardEl, drawCard, cardsReady: ready, openJoin, sendAway, signOf });
 })(window);

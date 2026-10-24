@@ -8,11 +8,14 @@
 <meta name="theme-color" content="#4A9BEA">
 <meta property="og:title" content="선생님들이 만드는 티로 수능응원 아트월 | 한국교총">
 <meta property="og:description" content="선생님의 한마디가 누군가의 내일을 밝힙니다.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://bestcho74-creator.github.io/kfta-tiro-artwall/tiro_day.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261021h">
+<link rel="stylesheet" href="join.css?v=20261024a">
 <style>
 @font-face{font-family:'Paperlogy';font-weight:500;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2) format('woff2')}
 @font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format('woff2')}
@@ -44,14 +47,14 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
 </div>
 <div id="stage"></div>
 
-<script src="config.js?v=20261021h"></script>
-<script src="assets.js?v=20261021h"></script>
-<script src="data.js?v=20261021h"></script>
-<script src="qm-engine.js?v=20261021h"></script>
-<script src="join.js?v=20261021h"></script>
+<script src="config.js?v=20261024a"></script>
+<script src="assets.js?v=20261024a"></script>
+<script src="data.js?v=20261024a"></script>
+<script src="qm-engine.js?v=20261024a"></script>
+<script src="join.js?v=20261024a"></script>
 <script>
 (async function () {
-  const { CONFIG: SITE, Store, dday, keyedTiro, rng, REGIONS, getTheme, setTheme } = KFTA;
+  const { CONFIG: SITE, Store, dday, keyedTiro, rng, getTheme, setTheme } = KFTA;
   document.getElementById('dd').textContent = dday();
   let pieces = [];
   try { pieces = await Store.load(); } catch (e) { console.warn('응원 불러오기 실패', e); }
@@ -97,7 +100,6 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
   }
   const ART = SHOW.map((p, i) => i % 2 ? messageCard(p) : cardArt(i, p));
 
-  let regOpen = false;   // 지역별 응원 조각 팝오버 (화면이 다시 그려져도 상태 유지)
 
   // ② 모션: 세로 카드 기둥 (쿼카 모션랩 원본 구조, 문구·카드만 교총 캠페인용으로)
   function lpColumnMarquee(api) {
@@ -138,44 +140,11 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
     btn2.href = 'artwall.html#join';
     btn2.onclick = e => { e.preventDefault(); openJoin(); };
     const stats = S.div(text, `display:flex;gap:${T * 0.5}px;margin-top:${T * 0.55}px;`);
-    [[pieces.length.toLocaleString('ko-KR'), '응원 조각'], ['17', '시·도교총'], [dday(), '11.19 수능']].forEach(([b, s]) => {
+    [[pieces.length.toLocaleString('ko-KR'), '응원 조각'], ['11.18', '작품 공개'], [dday(), '11.19 수능']].forEach(([b, s]) => {
       const st = S.div(stats, '');
       S.div(st, `font:800 ${T * 0.42}px/1.1 ${face};letter-spacing:-.02em;font-variant-numeric:tabular-nums;`, b);
       S.div(st, `font:500 ${Math.max(11, T * 0.17)}px/1.4 ${small};color:${S.tint(0.55)};margin-top:2px;`, s);
     });
-    // 지역별 응원 조각: 버튼을 눌러야 열리는 팝오버
-    const pill = S.div(text, `display:inline-flex;align-items:center;gap:6px;margin-top:${T * 0.4}px;padding:${T * 0.12}px ${T * 0.24}px;border-radius:999px;border:1px solid ${S.tint(0.2)};background:${night ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.6)'};font:700 ${Math.max(12, T * 0.17)}px/1.2 ${small};color:${S.tint(0.85)};cursor:pointer;user-select:none;`, null, 'button');
-    pill.type = 'button';
-    S.div(pill, '', '지역별 응원 조각', 'span');
-    const caret = S.div(pill, 'display:inline-block;transition:transform .25s;', '▾', 'span');
-    const cnt = REGIONS.map(r => pieces.filter(p => p.region === r).length), max = Math.max(1, ...cnt);
-    const pop = S.div(all, `position:absolute;z-index:5;display:none;padding:${T * 0.22}px ${T * 0.26}px ${T * 0.16}px;border-radius:${T * 0.22}px;color:${fg};background:${night ? 'rgba(14,24,64,.94)' : 'rgba(255,255,255,.95)'};backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px ${S.tint(0.12)},0 24px 60px rgba(16,40,110,.3);`);
-    const hd = S.div(pop, `display:flex;justify-content:space-between;align-items:baseline;font:700 ${Math.max(11, T * 0.17)}px/1.2 ${small};color:${S.tint(0.85)};margin-bottom:${T * 0.16}px;`);
-    S.div(hd, '', '지역별 응원 조각', 'span');
-    S.div(hd, `font-weight:500;color:${S.tint(0.5)};`, '17개 시·도교총', 'span');
-    const CH = Math.max(70, T * 0.95);
-    const bars = S.div(pop, `display:flex;align-items:flex-end;gap:${Math.max(2, T * 0.05)}px;height:${CH}px;`);
-    const barEls = cnt.map((n, i) => {
-      const col = S.div(bars, 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;');
-      S.div(col, `font:700 ${Math.max(9, T * 0.12)}px/1 ${small};color:${S.tint(0.75)};margin-bottom:3px;font-variant-numeric:tabular-nums;`, n);
-      return S.div(col, `width:100%;max-width:${T * 0.3}px;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,#62C3FF,#1F5FD0);height:0;transition:height 1s cubic-bezier(.2,.8,.2,1) ${i * 30}ms;`);
-    });
-    const lb = S.div(pop, `display:flex;gap:${Math.max(2, T * 0.05)}px;margin-top:${T * 0.08}px;`);
-    REGIONS.forEach(r => S.div(lb, `flex:1;text-align:center;font:600 ${Math.max(9, T * 0.115)}px/1 ${small};color:${S.tint(0.6)};white-space:nowrap;`, r));
-    const setReg = on => {
-      regOpen = on; pop.style.display = on ? 'block' : 'none'; caret.style.transform = on ? 'rotate(180deg)' : '';
-      if (on) {
-        const rr = api.root.getBoundingClientRect(), pr = pill.getBoundingClientRect();
-        pop.style.left = pad + 'px';
-        pop.style.width = Math.min(W - pad * 2, Math.max(text.offsetWidth, 360)) + 'px';
-        // 아래가 모자라면 버튼 위로 펼침 (화면 밖으로 잘리지 않게)
-        const ph = pop.offsetHeight, below = pr.bottom - rr.top + 10;
-        pop.style.top = (below + ph <= H - 12 ? below : Math.max(12, pr.top - rr.top - ph - 10)) + 'px';
-        requestAnimationFrame(() => requestAnimationFrame(() => barEls.forEach((b, i) => b.style.height = Math.max(3, cnt[i] / max * CH * 0.65) + 'px')));
-      } else barEls.forEach(b => b.style.height = 0);
-    };
-    pill.onclick = e => { e.stopPropagation(); setReg(!regOpen); };
-    api.root.addEventListener('click', e => { if (regOpen && !pop.contains(e.target)) setReg(false); });
     const th = text.offsetHeight;
     text.style.top = (S.tall ? Math.max(H * 0.1, 76) : H * 0.5 - th / 2) + 'px';
     const ncol = S.tall ? 2 : 3;
@@ -220,7 +189,6 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
       });
       cursor.set(P);
     };
-    if (regOpen) requestAnimationFrame(() => setReg(true));
     frame.fonts = true;
     return frame;
   }

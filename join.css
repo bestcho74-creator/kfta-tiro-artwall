@@ -61,6 +61,19 @@
 .jx-btn:disabled{opacity:.4;cursor:not-allowed}
 .jx-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
 .jx-main{background:linear-gradient(100deg,#FFD39A,#FFB866);color:#14306E;box-shadow:0 10px 30px rgba(255,184,102,.35)}
+.jx-warn{margin:8px 2px 0;font-size:12.5px;color:#FFC2C2}
+.jx-help.bad{color:#FFC2C2}
+.jx-field input.bad{border-color:#FF8A8A}
+.jx-nicks{margin-top:8px}
+.jx-nicks button{padding:5px 11px;font-size:12.5px}
+.jx-prize{margin-top:16px;border-radius:16px;padding:12px 14px 14px;background:rgba(255,211,154,.08);border:1px solid rgba(255,211,154,.3)}
+.jx-prize-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.jx-prize-h b{font-size:14px;color:#FFD39A}
+.jx-prize-h span{font-size:12px;color:rgba(255,255,255,.7)}
+.jx-prize .jx-field{margin-top:12px}
+.jx-field em{font-style:normal;font-size:11px;font-weight:800;color:#14306E;background:#FFD39A;border-radius:999px;padding:1px 7px;margin-left:4px}
+.jx-check.need span{color:#FFD39A}
+.jx-check.need input{outline:2px solid #FFD39A;outline-offset:2px;border-radius:4px}
 .jx-err{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:rgba(255,99,99,.14);border:1px solid rgba(255,140,140,.45);color:#FFD6D6;font-size:13px;line-height:1.5}
 .jx-small{font-size:12px;color:rgba(255,255,255,.5);margin-top:12px;line-height:1.6}
 

@@ -63,8 +63,8 @@
     '너는 혼자가 아니야. 응원하는 사람이 이렇게 많아.',
     '그동안 흘린 땀이 오늘 빛날 거예요.',
   ];
-  // 예시 아이디 (아트월에는 앞 3자리만 공개)
-  const NICKS = ['kft***', 'sun****', 'edu***', 'tea****', 'hop***', 'min****', 'par***', 'lee****', 'kim***', 'cho****', 'jeo***', 'han****', 'sta***', 'dre****', 'gyo***', 'tir****', 'seo***', 'bus****', 'jsh***', 'ysk****', 'ssa***', 'mat****', 'eng***', 'art****', 'hsc***', 'sci****'];
+  // 예시 닉네임
+  const NICKS = ['국어쌤', '3학년 담임', '수학하는 티로', '보건실 지킴이', '진로쌤', '칠판지기', '분필요정', '봄날의 교실', '응원단장', '티로팬', '1교시 지킴이', '교무실 커피', '종례는 짧게', '영어샘', '과학 선생님', '체육쌤', '음악샘', '미술쌤', '사서샘', '상담 선생님', '특수교사', '영양 선생님', '고3 부장', '초등 담임', '중등 국어', '한문쌤'];
 
   const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const pickW = (r, w) => { let s = w.reduce((a, b) => a + b, 0), x = r() * s; for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
@@ -109,8 +109,8 @@
     const byN = new Map(rows.map(r => [r.n, r]));
     load().forEach(m => {
       const r = byN.get(m.n);
-      if (r) Object.assign(r, { mine: true, prize: m.prize, insta: m.insta, status: 'approved', pending: false });
-      else if (m.status !== 'hidden') { const x = Object.assign({}, m, { mine: true, pending: true }); delete x.memberId; rows.push(x); }
+      if (r) Object.assign(r, { mine: true, prize: m.prize, sns: m.sns, youtube: m.youtube, status: 'approved', pending: false });
+      else if (m.status !== 'hidden') { const x = Object.assign({}, m, { mine: true, pending: true }); delete x.token; rows.push(x); }
     });
     rows.sort((a, b) => a.n - b.n);
     return rows;
@@ -118,8 +118,8 @@
   async function checkMine() {
     const mine = load(); let changed = false;
     for (const m of mine) {
-      if (m.status !== 'pending' || !m.memberId) continue;
-      try { const st = await api('/rest/v1/rpc/my_piece_status', { method: 'POST', body: JSON.stringify({ p_n: m.n, p_member_id: m.memberId }) }); if (st && st !== m.status) { m.status = st; changed = true; } } catch (e) {}
+      if (m.status !== 'pending' || !m.token) continue;
+      try { const st = await api('/rest/v1/rpc/my_piece_status', { method: 'POST', body: JSON.stringify({ p_n: m.n, p_token: m.token }) }); if (st && st !== m.status) { m.status = st; changed = true; } } catch (e) {}
     }
     if (changed) save(mine);
   }
@@ -163,12 +163,13 @@
     // 응원 보내기
     async add(p) {
       if (!REMOTE) {
-        const mine = load(); mine.push({ region: p.region, nick: p.nick, msg: p.msg, card: p.card || 1, memberId: p.memberId || '', insta: p.insta || '', prize: !!p.prize, at: Date.now() }); save(mine);
+        const mine = load(); mine.push({ region: p.region, nick: p.nick, msg: p.msg, card: p.card || 1, prize: !!p.prize, sns: !!p.sns, youtube: !!p.youtube, at: Date.now() }); save(mine);
         await Store.load(); return cache[cache.length - 1];
       }
-      const r = await api('/rest/v1/rpc/submit_piece', { method: 'POST', body: JSON.stringify({ p_card: p.card, p_msg: p.msg, p_region: p.region, p_member_id: p.memberId, p_insta: p.insta || null, p_prize: !!p.prize }) });
-      const piece = { n: r.n, card: p.card, msg: p.msg, region: p.region, nick: r.nick, status: r.status, prize: !!p.prize, insta: p.insta || '', at: Date.now() };
-      const mine = load(); mine.push(Object.assign({ memberId: p.memberId }, piece)); save(mine);
+      const r = await api('/rest/v1/rpc/submit_piece', { method: 'POST', body: JSON.stringify({ p_card: p.card, p_msg: p.msg, p_region: p.region, p_nick: p.nick, p_phone: p.phone || null, p_sns: p.sns || null, p_youtube: p.youtube || null, p_prize: !!p.prize }) });
+      // 이 기기에는 확인용 값과 응모 여부만 남김 (전화번호 · SNS 아이디는 저장하지 않음)
+      const piece = { n: r.n, card: p.card, msg: p.msg, region: p.region, nick: p.nick, status: r.status, prize: !!p.prize, sns: !!p.sns, youtube: !!p.youtube, at: Date.now() };
+      const mine = load(); mine.push(Object.assign({ token: r.token }, piece)); save(mine);
       cache = merge(cache.filter(x => !x.pending));
       return cache.find(x => x.n === r.n) || Object.assign(piece, { mine: true, pending: r.status !== 'approved' });
     },
@@ -178,11 +179,22 @@
   // 보내기 오류를 사람이 읽을 문장으로
   function errorText(e) {
     const c = (e && (e.code || e.message)) || '';
-    if (/already_submitted/.test(c)) return '이 아이디로는 이미 응원을 남기셨어요. 아트월의 "내 조각 찾기"로 확인해 보세요.';
-    if (/invalid_member_id/.test(c)) return '한국교총 홈페이지 아이디를 3~30자로 입력해 주세요.';
+    if (/bad_nickname/.test(c)) return '이 닉네임은 쓸 수 없어요. 다른 닉네임을 적어 주세요.';
+    if (/bad_message/.test(c)) return '응원 메시지에 쓸 수 없는 표현이 있어요. 고운 말로 바꿔 주세요.';
+    if (/invalid_nickname/.test(c)) return '닉네임을 2~12자로 적어 주세요.';
+    if (/invalid_phone/.test(c)) return '휴대전화 번호를 010-0000-0000 형식으로 적어 주세요.';
     if (/invalid_message/.test(c)) return '응원 메시지를 2~100자로 적어 주세요.';
-    if (e && e.status === 429) return '잠시 후 다시 시도해 주세요.';
+    if (/duplicate/.test(c)) return '같은 닉네임으로 같은 응원을 이미 보내셨어요.';
+    if (/too_many/.test(c) || (e && e.status === 429)) return '응원이 몰리고 있어요. 10분 뒤에 다시 시도해 주세요.';
     return '전송하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
+  }
+
+  // 욕설 · 나쁜 의미 낱말 (서버의 bad_word와 같은 목록 · 화면에서 먼저 알려 주는 용도)
+  const BAD = ['씨발','시발','씨빨','시빨','씨바','씹','ㅅㅂ','ㅆㅂ','ㅄ','ㅂㅅ','병신','븅신','빙신','병딱','개새','개색','개쌔','개세끼','좆','존나','졸라','지랄','ㅈㄹ','염병','썅','쌍년','니미','니애미','느금','애미','애비','엠창','후장','섹스','쎅스','야동','보지','자지','강간','fuck','shit','bitch','asshole','pussy','dick','porn','sex'];
+  const BAD_NICK = ['미친','미쳤','새끼','꺼져','닥쳐','등신','또라이','돌아이','호로','뒤져','뒈져','죽어','죽여','자살','일베','한남','한녀','메갈','틀딱','급식충','맘충','짱깨','쪽바리','관리자','운영자','admin'];
+  function badWord(t, strict) {
+    const s = String(t || '').toLowerCase().replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-z]/g, '');
+    return BAD.some(w => s.includes(w)) || (strict && BAD_NICK.some(w => s.includes(w)));
   }
 
   // 메인 카드 기둥용 예시 응원 (실제 응원이 적을 때 채움)
@@ -244,5 +256,5 @@
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  Object.assign(global, { KFTA: { CONFIG, CARDS, REGIONS, errorText, samplePieces, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
+  Object.assign(global, { KFTA: { CONFIG, CARDS, REGIONS, errorText, samplePieces, badWord, MESSAGES, Store, dday, loadImg, keyedTiro, toast, rng, getTheme, setTheme } });
 })(window);

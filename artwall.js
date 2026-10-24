@@ -3,7 +3,7 @@
       어두운 전시실로 바꿔 벽 전체에 성운 영상을 흘리고, 바닥은 검은 유광으로 비춥니다.
    ② 모자이크: 첫 200조각이 티로를 이루고, 201번째부터 바깥으로 넓어집니다. */
 (async function () {
-  const { CONFIG, REGIONS, Store, dday, keyedTiro, toast, rng } = KFTA;
+  const { CONFIG, Store, dday, keyedTiro, toast, rng } = KFTA;
   const $ = s => document.querySelector(s);
   const params = new URLSearchParams(location.search);
   let signage = params.has('signage');
@@ -244,18 +244,9 @@
     pieces.forEach(p => { const s = slotOf(p.n); p.c = s.c; p.r = s.r; byKey.set(s.c + ',' + s.r, p); byN.set(p.n, p); });
     document.querySelectorAll('[data-count]').forEach(e => e.textContent = pieces.length.toLocaleString('ko-KR'));
     document.querySelectorAll('[data-dday]').forEach(e => e.textContent = dday());
-    renderRegions();
   }
 
-  // 지역 현황 그래프
-  let hitRegion = null;
-  function renderRegions() {
-    const cnt = REGIONS.map(r => pieces.filter(p => p.region === r).length), max = Math.max(1, ...cnt);
-    const rows = REGIONS.map((r, i) => `<div class="rp-row${r === hitRegion ? ' hit' : ''}"><span class="nm">${r}</span><span class="bk"><i data-w="${(cnt[i] / max * 100).toFixed(1)}"></i></span><span class="ct">${cnt[i]}</span></div>`).join('');
-    $('#rpList').innerHTML = rows;
-    $('#regs').innerHTML = REGIONS.map((r, i) => `<div class="reg"><div class="t"><span>${r}교총</span><b>${cnt[i]}</b></div><div class="bar2"><i style="width:${(cnt[i] / max * 100).toFixed(1)}%"></i></div></div>`).join('');
-    requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('#rpList i').forEach(i => i.style.width = i.dataset.w + '%')));
-  }
+
 
   // 타일 그림 캐시
   const TS = 112;
@@ -335,8 +326,6 @@
     // 뒷벽 사각형을 화면에 투영 → 모자이크가 벽에 붙어 있게
     const a = project([-XW + 0.35, ROOM.HC - 0.3, 0]), b = project([XW - 0.35, 0.28, 0]);
     let L = Math.max(a[0], 16), T = Math.max(a[1], 78), R = Math.min(b[0], SW - 16), B = Math.min(b[1], SH - (SW < 720 ? 130 : 84));
-    const panel = $('#regPanel');
-    if (panel && panel.offsetParent) { const pr = panel.getBoundingClientRect(); if (pr.left < R) R = Math.min(R, pr.left - 16); }
     if (signage) { T = Math.max(T, SH * 0.06); R = Math.min(R, SW * 0.78); L = Math.max(L, SW * (SW > SH ? 0.24 : 0.04)); }
     if (sceneImg) {
       // 장면 모자이크는 화면을 큼직하게 채움 (상단 바 ~ 도구 막대 사이)
@@ -551,12 +540,6 @@
   $('#zIn').onclick = () => zoomAt(home.cx, home.cy, 1.5);
   $('#zOut').onclick = () => zoomAt(home.cx, home.cy, 1 / 1.5);
   $('#fit').onclick = () => fitAll(900);
-  $('#rand').onclick = () => { if (!pieces.length) return toast('아직 공개된 응원이 없어요. 첫 응원을 남겨 주세요!'); const p = pieces[Math.floor(Math.random() * pieces.length)]; flyToPiece(p); setTimeout(() => openPiece(p), 1100); };
-  // 지역별 응원 조각: 토글로 열고 닫기
-  const regToggle = on => { $('#regPanel').classList.toggle('on', on); $('#regBtn').classList.toggle('on', on); if (on) renderRegions(); };
-  $('#regBtn').onclick = () => regToggle(!$('#regPanel').classList.contains('on'));
-  $('#rpClose').onclick = () => regToggle(false);
-  $('#rpMore').onclick = () => $('#regDlg').showModal();
   // 낮 · 밤 선택
   const themeLabel = () => document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', b.dataset.theme === theme));
   document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { theme = b.dataset.theme; KFTA.setTheme(theme); document.body.classList.toggle('night', theme === 'night'); themeLabel(); });
@@ -587,12 +570,12 @@
     tk.hidden = !mine;
     if (mine) {
       lastMine = p;
-      tk.textContent = (p.pending ? '검수 대기 중이에요. 승인되면 모든 화면의 아트월에 공개됩니다. ' : '') + (p.prize ? '응모권 1장이 지급됐어요.' : '경품 응모는 선택하지 않으셨어요.') + (p.prize && p.insta ? ' 인스타그램 이벤트 댓글이 확인되면 추가 추첨 기회 1회가 더해집니다.' : '');
+      const extra = (p.sns ? 1 : 0) + (p.youtube ? 1 : 0);
+      tk.textContent = (p.pending ? '검수 대기 중이에요. 승인되면 모든 화면의 아트월에 공개됩니다. ' : '') + (p.prize ? `경품 응모 완료! 추첨 기회 1회${extra ? `에 SNS·유튜브 확인 시 ${extra}회가 더해져 당첨 확률이 높아져요.` : '. SNS 팔로우·유튜브 구독 아이디를 남기면 당첨 확률이 높아져요.'}` : '경품 응모는 선택하지 않으셨어요.');
     }
     if (!pieceDlg.open) pieceDlg.showModal();
   }
   const posText = p => `가로 ${p.c - Math.round(ccx) >= 0 ? '+' : ''}${p.c - Math.round(ccx)} · 세로 ${Math.round(ccy) - p.r >= 0 ? '+' : ''}${Math.round(ccy) - p.r}`;
-  $('#pNext').onclick = () => { if (!pieces.length) return; const p = pieces[Math.floor(Math.random() * pieces.length)]; pieceDlg.close(); flyToPiece(p); setTimeout(() => openPiece(p), 1100); };
   $('#pStay').onclick = () => pieceDlg.close();
   document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
   document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
@@ -603,7 +586,6 @@
   function welcome(p, info) {
     lastMine = p;
     if (pieceDlg.open) pieceDlg.close();
-    hitRegion = p.region; renderRegions(); setTimeout(() => { hitRegion = null; renderRegions(); }, 8000);
     fitAll(700);
     setTimeout(() => { arrival = { p, t0: performance.now() }; }, 800);
     setTimeout(() => { selected = p; flyToPiece(p, 1400); }, 2700);
@@ -626,16 +608,33 @@
   $('#tagList').innerHTML = CONFIG.hashtags.map(t => `<span>${t}</span>`).join('');
   $('#copyTags').onclick = () => copyText(TAGS, '필수 해시태그를 복사했어요. 스토리·피드에 붙여 넣어 주세요');
   $('#copyCaption').onclick = () => copyText(caption(), '피드 문구를 복사했어요. 게시물 본문에 붙여 넣어 주세요');
-  $('#copy').onclick = () => copyText(myLink(), '내 조각 링크를 복사했어요');
-  $('#share').onclick = async () => {
-    // 휴대전화: 스토리 이미지 + 해시태그 문구를 함께 공유 (인스타그램 등)
-    try {
-      const blob = await storyBlob(lastMine), file = new File([blob], `티로의_${lastMine.n}번째_응원.png`, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { copyText(TAGS, '해시태그를 복사해 두었어요. 올릴 때 붙여 넣어 주세요'); await navigator.share({ files: [file], text: caption() }); return; }
-      if (navigator.share) { await navigator.share({ title: '선생님들이 만드는 티로 수능응원 아트월', text: caption() }); return; }
-    } catch (e) { if (e && e.name === 'AbortError') return; }
-    copyText(caption(), '공유 문구를 복사했어요. 원하는 곳에 붙여 넣어 주세요');
-  };
+  // 공유하기: 링크 복사 · 인스타그램 · 페이스북 · 스레드 · X · 밴드 (휴대전화는 다른 앱도)
+  const shareDlg = $('#shareDlg');
+  const enc = encodeURIComponent;
+  const shareText = () => `나는 티로의 ${lastMine.n.toLocaleString('ko-KR')}번째 응원입니다 ✦ 선생님들이 만드는 티로 수능응원 아트월에 함께해 주세요. ${TAGS}`;
+  const openWin = url => window.open(url, '_blank', 'noopener,width=620,height=680');
+  $('#shareMore').hidden = !navigator.share;
+  $('#share').onclick = () => shareDlg.showModal();
+  shareDlg.addEventListener('click', async e => {
+    const b = e.target.closest('[data-share]'); if (!b || !lastMine) return;
+    const link = myLink(), kind = b.dataset.share;
+    if (kind === 'copy') return copyText(link, '내 응원 링크를 복사했어요');
+    if (kind === 'facebook') return openWin('https://www.facebook.com/sharer/sharer.php?u=' + enc(link));
+    if (kind === 'threads') return openWin('https://www.threads.net/intent/post?text=' + enc(shareText() + '\n' + link));
+    if (kind === 'x') return openWin('https://twitter.com/intent/tweet?text=' + enc(shareText()) + '&url=' + enc(link));
+    if (kind === 'band') return openWin('https://band.us/plugin/share?body=' + enc(shareText() + '\n' + link) + '&route=' + enc(siteBase()));
+    if (kind === 'more') { try { await navigator.share({ title: '선생님들이 만드는 티로 수능응원 아트월', text: shareText(), url: link }); } catch (err) {} return; }
+    if (kind === 'instagram') {
+      // 인스타그램은 웹 공유 주소가 없어 스토리 이미지로 올림: 휴대전화는 공유 창, PC는 이미지 저장 + 문구 복사
+      copyText(caption(), '피드 문구와 해시태그를 복사했어요');
+      try {
+        const blob = await storyBlob(lastMine), file = new File([blob], `티로의_${lastMine.n}번째_응원.png`, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: caption() }); return; }
+      } catch (err) { if (err && err.name === 'AbortError') return; }
+      await storyImage(lastMine);
+      openWin('https://www.instagram.com/');
+    }
+  });
   $('#story').onclick = () => storyImage(lastMine);
 
   // 스토리용 이미지 1080×1920: 아트월 배경 + 내 응원 카드

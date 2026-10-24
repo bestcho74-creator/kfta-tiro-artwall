@@ -1,7 +1,8 @@
 /* 티로 수능응원 아트월 · 관리자 화면 (검수 · 경품 추첨)
    Supabase REST를 fetch로 바로 부릅니다 (supabase-js 없음).
-   ① 로그인(Auth) → ② 관리자 확인(is_admin) → ③ 목록 · 검수 · 인스타 확인 · 삭제 · 자동 공개 설정
-   ④ CSV 내보내기 · 경품 추첨 (추첨권 가중치 · 중복 없이 · crypto.getRandomValues) */
+   ① 로그인(Auth) → ② 관리자 확인(is_admin) → ③ 목록 · 검수 · SNS/유튜브 확인 · 삭제 · 자동 공개 설정
+   ④ CSV 내보내기 · 경품 추첨 (추첨 기회 가중치 1~3 · 중복 없이 · crypto.getRandomValues)
+   owner_token · ip_hash는 내부용이라 아예 불러오지 않습니다 (화면 · CSV에 나오지 않음). */
 (function () {
   'use strict';
   const K = window.KFTA || {};
@@ -17,6 +18,9 @@
   const DONE = { approved: '공개했습니다', hidden: '숨겼습니다', pending: '검수 대기로 돌렸습니다' };
   const ASK = { approved: '공개할까요', hidden: '숨길까요', pending: '검수 대기로 돌릴까요' };
   const TAB_FILE = { pending: '검수대기', approved: '공개', hidden: '숨김', all: '전체' };
+  // 불러올 칸 (owner_token · ip_hash 제외)
+  const COLS = 'n,card,msg,region,nick,phone,sns_id,sns_checked,youtube_id,youtube_checked,prize,status,created_at,reviewed_at,reviewed_by';
+  const CHK = { sns_checked: 'SNS 팔로우 확인', youtube_checked: '유튜브 구독 확인' };
 
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -35,20 +39,35 @@
   }
   const stamp = () => { const d = new Date(Date.now() + 9 * 3600e3); return `${d.getUTCFullYear()}${z(d.getUTCMonth() + 1)}${z(d.getUTCDate())}-${z(d.getUTCHours())}${z(d.getUTCMinutes())}`; };
 
-  // 인스타그램 아이디: @ · 주소 앞부분을 떼고 정리
-  const igOf = p => String((p && p.insta) || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@+/, '').replace(/[/?#].*$/, '').trim();
-  const igValid = s => /^[A-Za-z0-9._]{1,30}$/.test(s);
-  const tix = p => 1 + (p.insta_checked ? 1 : 0);   // 추첨권: 기본 1 + 인스타 확인 1 (최대 2)
+  const str = v => String(v == null ? '' : v).trim();
+  const digits = v => String(v == null ? '' : v).replace(/\D/g, '');
+  // SNS 팔로우 아이디가 인스타그램 아이디처럼 보이면 그 아이디 (@ · instagram.com 주소 앞부분 떼고), 아니면 ''
+  function igOf(p) {
+    let s = str(p && p.sns_id);
+    const m = /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([^/?#]+)\/?(?:[?#].*)?$/i.exec(s);
+    s = m ? m[1] : s.replace(/^@+/, '');
+    if (!/^[A-Za-z0-9._]{1,30}$/.test(s) || /^\.|\.\.|\.$/.test(s)) return '';
+    if (/\.(com|net|org|kr|co|io|me|tv)$/i.test(s)) return '';   // 다른 사이트 주소로 보이면 링크 안 함
+    return s;
+  }
+  // 중복 비교용 값 (앞뒤 공백 · 앞의 @ 무시 · 대소문자 무시)
+  const keyOf = v => str(v).replace(/^@+/, '').trim().toLowerCase();
+  const snsKey = p => (igOf(p) || keyOf(p.sns_id)).toLowerCase();
+  const ytKey = p => keyOf(str(p.youtube_id).replace(/^(?:https?:\/\/)?(?:www\.|m\.)?youtube\.com\//i, '').replace(/\/+$/, ''));
+  const phoneKey = p => { const d = digits(p.phone); return d.length >= 9 ? d : ''; };
+  // 추첨 기회: 기본 1 + SNS 팔로우 확인 1 + 유튜브 구독 확인 1 (최대 3)
+  const tix = p => 1 + (p.sns_checked ? 1 : 0) + (p.youtube_checked ? 1 : 0);
 
   /* ===================== 상태 ===================== */
   let session = null;        // { access_token, refresh_token, expires_at(ms), email }
   let items = [];            // 서버의 전체 조각 (n 내림차순)
   let byN = new Map();
-  let counts = { all: 0, pending: 0, approved: 0, hidden: 0, prize: 0, instaOk: 0 };
-  let igCount = new Map();   // 인스타 아이디별 건수 (중복 의심 표시)
+  const EMPTY_COUNTS = () => ({ all: 0, pending: 0, approved: 0, hidden: 0, prize: 0, snsOk: 0, ytOk: 0 });
+  let counts = EMPTY_COUNTS();
+  let dupMaps = { phone: new Map(), sns: new Map(), yt: new Map() };   // 휴대전화 · SNS · 유튜브별 건수 (중복 의심 표시)
   let settings = null;
   const sel = new Set();     // 선택한 번호
-  const F = { tab: 'pending', region: '', extra: '', q: '' };
+  const F = { tab: 'pending', region: '', extra: '', q: '', qd: '' };   // qd: 숫자만 (휴대전화 하이픈 무시 검색)
   let view = [];             // 현재 필터 결과
   let shown = STEP;
   let lastPick = -1;         // Shift 범위 선택 기준
@@ -91,7 +110,7 @@
     if (/Email not confirmed|email_not_confirmed/i.test(m)) return '이메일 인증이 끝나지 않은 계정입니다. 대시보드에서 계정을 확인해 주세요.';
     if (e.status === 401 || /JWT|PGRST301|refresh token/i.test(m)) return '로그인이 만료되었습니다. 다시 로그인해 주세요.';
     if (e.status === 403 || /42501|permission denied|no_rows/i.test(m)) return '권한이 없습니다. 관리자 계정인지 확인해 주세요.';
-    if (e.status === 404 || /PGRST202|PGRST205|42P01|42883/.test(m)) return '서버에 필요한 표나 함수가 없습니다. SQL 마이그레이션을 실행했는지 확인해 주세요.';
+    if (e.status === 404 || /PGRST202|PGRST205|PGRST204|42P01|42883|42703/.test(m)) return '서버에 필요한 표나 함수가 없습니다. SQL 마이그레이션을 실행했는지 확인해 주세요.';
     if (e.status === 429) return '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
     if (e.status >= 500) return '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
     return '요청을 처리하지 못했습니다' + (e.message ? ': ' + e.message : '.');
@@ -219,9 +238,9 @@
     toast('로그아웃했습니다.');
   }
   function resetData() {
-    items = []; byN = new Map(); igCount = new Map(); sel.clear(); view = []; settings = null; draw = null;
+    items = []; byN = new Map(); dupMaps = { phone: new Map(), sns: new Map(), yt: new Map() }; sel.clear(); view = []; settings = null; draw = null;
     lastSig = ''; lastLoad = 0; loadErr = ''; shown = STEP; lastPick = -1;
-    counts = { all: 0, pending: 0, approved: 0, hidden: 0, prize: 0, instaOk: 0 };
+    counts = EMPTY_COUNTS();
     $('#list').textContent = ''; $('#dOut').innerHTML = ''; $('#dCsv').disabled = true;
   }
 
@@ -237,7 +256,7 @@
         for (let guard = 0; guard < 200 && from < total; guard++) {
           let res;
           try {
-            res = await api('/rest/v1/pieces?select=*&order=n.desc', { raw: true, prefer: 'count=exact', headers: { 'Range-Unit': 'items', Range: `${from}-${from + PAGE - 1}` } });
+            res = await api(`/rest/v1/pieces?select=${COLS}&order=n.desc`, { raw: true, prefer: 'count=exact', headers: { 'Range-Unit': 'items', Range: `${from}-${from + PAGE - 1}` } });
           } catch (e) { if (e.status === 416) break; throw e; }   // 범위 밖 (중간에 삭제된 경우)
           const rows = await res.json();
           const m = /\/(\d+|\*)\s*$/.exec(res.headers.get('Content-Range') || '');
@@ -250,7 +269,7 @@
         const list = [...got.values()].sort((a, b) => b.n - a.n);
         const prevMax = items.length ? items[0].n : 0;
         const fresh = prevMax ? list.filter(p => p.n > prevMax).length : 0;
-        const sig = list.map(p => `${p.n}:${p.status}:${p.insta_checked ? 1 : 0}:${p.reviewed_at || ''}`).join('|');
+        const sig = list.map(p => `${p.n}:${p.status}:${p.sns_checked ? 1 : 0}${p.youtube_checked ? 1 : 0}:${p.reviewed_at || ''}`).join('|');
         items = list; byN = new Map(list.map(p => [p.n, p]));
         lastLoad = Date.now(); loadErr = '';
         derive();
@@ -273,21 +292,26 @@
     return loadingP;
   }
 
-  // 건수 · 인스타 중복 · 검색용 문자열
+  // 건수 · 중복 의심(휴대전화 · SNS · 유튜브) · 검색용 문자열
+  const DUP = [['phone', '휴대전화', phoneKey], ['sns', 'SNS', snsKey], ['yt', '유튜브', ytKey]];
   function derive() {
-    const c = { all: items.length, pending: 0, approved: 0, hidden: 0, prize: 0, instaOk: 0 };
-    igCount = new Map();
+    const c = EMPTY_COUNTS();
+    c.all = items.length;
+    dupMaps = { phone: new Map(), sns: new Map(), yt: new Map() };
+    const bump = (m, k) => { if (k) m.set(k, (m.get(k) || 0) + 1); };
     items.forEach(p => {
       c[p.status] = (c[p.status] || 0) + 1;
       if (p.prize) c.prize++;
-      if (p.insta_checked) c.instaOk++;
-      const ig = igOf(p).toLowerCase();
-      if (ig) igCount.set(ig, (igCount.get(ig) || 0) + 1);
-      p._hay = [p.n, pad(p.n), p.msg, p.member_id, p.nick, p.insta, igOf(p)].join('\n').toLowerCase();
+      if (p.sns_checked) c.snsOk++;
+      if (p.youtube_checked) c.ytOk++;
+      DUP.forEach(([f, , key]) => bump(dupMaps[f], key(p)));
+      p._hay = [p.n, pad(p.n), p.msg, p.nick, p.phone, p.sns_id, igOf(p), p.youtube_id].map(str).join('\n').toLowerCase();
+      p._dig = digits(p.phone);
     });
     counts = c;
   }
-  const dupOf = p => { const ig = igOf(p).toLowerCase(); return ig ? igCount.get(ig) || 0 : 0; };
+  // 이 응원과 같은 값이 다른 응원에도 있는 칸들: [{ label, count }]
+  const dupOf = p => DUP.map(([f, label, key]) => { const k = key(p); return { label, count: k ? dupMaps[f].get(k) || 0 : 0 }; }).filter(d => d.count > 1);
 
   /* ===================== 설정 (자동 공개) ===================== */
   async function loadSettings(quiet) {
@@ -321,7 +345,7 @@
     renderAuto();
   }
 
-  /* ===================== 검수 · 인스타 확인 · 삭제 ===================== */
+  /* ===================== 검수 · SNS/유튜브 확인 · 삭제 ===================== */
   async function review(ns, status, o = {}) {
     ns = ns.filter(n => byN.has(n) && byN.get(n).status !== status);
     if (!ns.length) { if (o.idx != null) focusRow(o.idx + 1); return; }
@@ -342,16 +366,19 @@
     finally { busy--; }
   }
 
-  async function setInsta(n, on, input) {
+  // SNS 팔로우 확인 · 유튜브 구독 확인 (field: sns_checked | youtube_checked)
+  async function setCheck(n, field, on, input) {
     const p = byN.get(n);
-    if (!p || !Number.isInteger(n)) return;
+    if (!p || !Number.isInteger(n) || !CHK[field]) return;
     input.disabled = true;
     busy++;
     try {
-      await api(`/rest/v1/pieces?n=eq.${n}`, { method: 'PATCH', prefer: 'return=minimal', body: { insta_checked: on } });
-      p.insta_checked = on;
+      await api(`/rest/v1/pieces?n=eq.${n}`, { method: 'PATCH', prefer: 'return=minimal', body: { [field]: on } });
+      p[field] = on;
       derive(); renderStats();
-      toast(on ? `No.${pad(n)} 인스타 확인 · 추첨권 2장` : `No.${pad(n)} 인스타 확인 해제 · 추첨권 1장`);
+      const row = input.closest('.row'), t = row && row.querySelector('[data-tix]');
+      if (t) { t.textContent = tix(p) + '회'; t.classList.toggle('t2', tix(p) > 1); }
+      toast(`No.${pad(n)} ${CHK[field]}${on ? '' : ' 해제'} · 추첨 기회 ${tix(p)}회`);
     } catch (e) { input.checked = !on; fail(e); }
     finally { input.disabled = false; busy--; }
   }
@@ -359,7 +386,7 @@
   async function removePiece(n) {
     const p = byN.get(n);
     if (!p || !Number.isInteger(n)) return;
-    if (!confirm(`No.${pad(n)} 응원을 완전히 삭제할까요?\n\n· 삭제한 번호(${n}번째 조각 자리)는 다시 채워지지 않고 빈칸으로 남습니다.\n· 같은 홈페이지 아이디로 다시 응원을 보낼 수 있게 됩니다.\n· 아트월에서 내리기만 하려면 [숨김]을 쓰세요.\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+    if (!confirm(`No.${pad(n)} 응원을 완전히 삭제할까요?\n\n· 삭제한 번호(${n}번째 조각 자리)는 다시 채워지지 않고 빈칸으로 남습니다.\n· 같은 닉네임 · 메시지로 다시 응원을 보낼 수 있게 됩니다.\n· 아트월에서 내리기만 하려면 [숨김]을 쓰세요.\n\n이 작업은 되돌릴 수 없습니다.`)) return;
     busy++;
     try {
       const rows = await api(`/rest/v1/pieces?n=eq.${n}`, { method: 'DELETE', prefer: 'return=representation' });
@@ -377,12 +404,18 @@
     if (F.region && p.region !== F.region) return false;
     switch (F.extra) {
       case 'prize': if (!p.prize) return false; break;
-      case 'insta': if (!igOf(p)) return false; break;
-      case 'insta_todo': if (!igOf(p) || p.insta_checked) return false; break;
-      case 'insta_ok': if (!p.insta_checked) return false; break;
-      case 'dup': if (dupOf(p) < 2) return false; break;
+      case 'prize_nophone': if (!p.prize || str(p.phone)) return false; break;
+      case 'phone': if (!str(p.phone)) return false; break;
+      case 'sns': if (!str(p.sns_id)) return false; break;
+      case 'sns_todo': if (!str(p.sns_id) || p.sns_checked) return false; break;
+      case 'sns_ok': if (!p.sns_checked) return false; break;
+      case 'yt': if (!str(p.youtube_id)) return false; break;
+      case 'yt_todo': if (!str(p.youtube_id) || p.youtube_checked) return false; break;
+      case 'yt_ok': if (!p.youtube_checked) return false; break;
+      case 'tix3': if (tix(p) < 3) return false; break;
+      case 'dup': if (!dupOf(p).length) return false; break;
     }
-    if (F.q && (p._hay || '').indexOf(F.q) < 0) return false;
+    if (F.q && (p._hay || '').indexOf(F.q) < 0 && !(F.qd && (p._dig || '').indexOf(F.qd) >= 0)) return false;
     return true;
   }
   function applyFilter() { view = items.filter(matches); lastPick = -1; }
@@ -412,7 +445,8 @@
       chip('ok', 'data-tab="approved"', '공개', c.approved),
       chip('hid', 'data-tab="hidden"', '숨김', c.hidden),
       chip('gold', 'data-tab="all" data-extra="prize"', '경품 응모', c.prize),
-      chip('sky', 'data-tab="all" data-extra="insta_ok"', '인스타 확인', c.instaOk),
+      chip('sky', 'data-tab="all" data-extra="sns_ok"', 'SNS 확인', c.snsOk),
+      chip('sky', 'data-tab="all" data-extra="yt_ok"', '유튜브 확인', c.ytOk),
     ].join('');
     document.querySelectorAll('#tabs button').forEach(b => {
       const t = b.dataset.tab;
@@ -432,16 +466,25 @@
     return el;
   }
 
+  // SNS 팔로우 아이디: 인스타그램 아이디처럼 보이면 링크, 아니면 글자 그대로
+  function snsHtml(p) {
+    const raw = str(p.sns_id), ig = igOf(p);
+    if (!raw) return '<span class="none">–</span>';
+    if (ig) return `<a class="mid" href="https://www.instagram.com/${encodeURIComponent(ig)}/" target="_blank" rel="noopener noreferrer" title="인스타그램에서 열기">@${esc(ig)}</a>`;
+    return `<b class="mid">${esc(raw)}</b>`;
+  }
+  const ytHtml = p => str(p.youtube_id) ? `<b class="mid">${esc(str(p.youtube_id))}</b>` : '<span class="none">–</span>';
+  const phoneHtml = p => str(p.phone) ? `<b class="mid">${esc(str(p.phone))}</b>` : '<span class="none">–</span>';
+  const dupHtml = d => d.length ? `<span class="dupb" title="${esc(d.map(x => `같은 ${x.label} 값으로 들어온 응원이 ${x.count}건`).join(' · '))}">중복 의심 · ${esc(d.map(x => `${x.label} ×${x.count}`).join(' · '))}</span>` : '';
+
   function rowEl(p) {
     const el = document.createElement('article');
-    const dup = dupOf(p), ig = igOf(p), no = 'No.' + esc(pad(p.n));
-    el.className = `row st-${esc(p.status)}${sel.has(p.n) ? ' sel' : ''}${dup > 1 ? ' dup' : ''}`;
+    const dup = dupOf(p), no = 'No.' + esc(pad(p.n)), t = tix(p);
+    el.className = `row st-${esc(p.status)}${sel.has(p.n) ? ' sel' : ''}${dup.length ? ' dup' : ''}`;
     el.tabIndex = 0;
     el.dataset.n = p.n;
     el.setAttribute('aria-label', `No.${pad(p.n)} ${ST[p.status] || p.status}`);
-    const igHtml = !ig ? '<span class="none">없음</span>'
-      : igValid(ig) ? `<a href="https://www.instagram.com/${encodeURIComponent(ig)}/" target="_blank" rel="noopener noreferrer">@${esc(ig)}</a>`
-      : `<span title="형식이 올바르지 않은 아이디">${esc(p.insta)}</span>`;
+    const sw = (f, label, title) => `<label class="kv swl" title="${title}"><input type="checkbox" class="sw" data-act="chk" data-f="${f}"${p[f] ? ' checked' : ''}><span>${label}</span></label>`;
     const ab = (s, label, cls) => `<button type="button" class="ab ${cls}" data-act="${s}"${p.status === s ? ' disabled aria-pressed="true"' : ''}>${label}</button>`;
     el.innerHTML = `
       <label class="ck" title="선택 (Shift: 범위 선택)"><input type="checkbox" data-act="sel"${sel.has(p.n) ? ' checked' : ''} aria-label="${no} 선택"></label>
@@ -451,15 +494,18 @@
           <b class="no">${no}</b><span class="bd ${esc(p.status)}">${esc(ST[p.status] || p.status)}</span>
           <span class="rg">${esc(p.region)}교총</span>
           <span class="tm" title="${esc(kst(p.created_at, true))} (KST)">${esc(kst(p.created_at))}</span>
-          ${dup > 1 ? `<span class="dupb" title="같은 인스타그램 아이디로 들어온 응원이 ${dup}건 있습니다">인스타 중복 ×${dup}</span>` : ''}
+          ${dupHtml(dup)}
         </div>
         <p class="msg">${esc(p.msg)}</p>
         <div class="rl3">
-          <span class="kv"><i>아이디</i><b class="mid">${esc(p.member_id)}</b></span>
-          <span class="kv"><i>공개명</i>${esc(p.nick)}</span>
-          <span class="kv"><i>인스타</i>${igHtml}</span>
+          <span class="kv"><i>닉네임</i><b class="mid nk">${esc(p.nick)}</b></span>
+          <span class="kv"><i>휴대전화</i>${phoneHtml(p)}</span>
           <span class="kv"><i>경품 응모</i><b class="yn ${p.prize ? 'y' : 'n'}">${p.prize ? 'Y' : 'N'}</b></span>
-          <label class="kv swl" title="인스타그램 댓글을 확인하면 추첨권 1장 추가"><input type="checkbox" class="sw" data-act="insta"${p.insta_checked ? ' checked' : ''}><span>인스타 확인</span></label>
+          <span class="kv"><i>추첨 기회</i><b class="tk${t > 1 ? ' t2' : ''}" data-tix>${t}회</b></span>
+        </div>
+        <div class="rl3">
+          <span class="pair"><span class="kv"><i>SNS 팔로우 아이디</i>${snsHtml(p)}</span>${sw('sns_checked', 'SNS 확인', '한국교총 SNS 팔로우를 확인하면 추첨 기회 1회 추가')}</span>
+          <span class="pair"><span class="kv"><i>유튜브 구독 아이디</i>${ytHtml(p)}</span>${sw('youtube_checked', '유튜브 확인', '한국교총 유튜브 구독을 확인하면 추첨 기회 1회 추가')}</span>
         </div>
         <div class="rl4">${p.reviewed_at ? `검수 ${esc(p.reviewed_by || '-')} · ${esc(kst(p.reviewed_at))}` : '검수 전'}</div>
       </div>
@@ -556,7 +602,10 @@
     const box = $('#bigCard');
     box.textContent = '';
     box.appendChild(cardOf(p));
-    $('#bigMeta').innerHTML = `<b>No.${esc(pad(p.n))}</b> · ${esc(ST[p.status] || p.status)} · ${esc(p.region)}교총 · ${esc(p.member_id)}<br>${esc(kst(p.created_at, true))} (KST)`;
+    const or = v => esc(str(v) || '–');
+    $('#bigMeta').innerHTML = `<b>No.${esc(pad(p.n))}</b> · ${esc(ST[p.status] || p.status)} · ${esc(p.region)}교총 · 닉네임 <b>${esc(p.nick)}</b>`
+      + `<br>휴대전화 ${or(p.phone)} · SNS ${or(p.sns_id)}${p.sns_checked ? ' ✓' : ''} · 유튜브 ${or(p.youtube_id)}${p.youtube_checked ? ' ✓' : ''}`
+      + `<br>경품 응모 ${p.prize ? 'Y' : 'N'} · 추첨 기회 ${tix(p)}회 · ${esc(kst(p.created_at, true))} (KST)`;
     $('#bigActs').innerHTML = ['approved', 'hidden', 'pending'].map(s => `<button type="button" class="btn sm ${s === 'approved' ? 'ok' : s === 'hidden' ? 'hid' : 'ghost'}" data-s="${s}"${p.status === s ? ' disabled' : ''}>${s === 'pending' ? '대기로' : ST[s]}</button>`).join('');
     $('#bigActs').dataset.n = n;
     $('#dlgCard').showModal();
@@ -571,6 +620,8 @@
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
   const toCSV = rows => rows.map(r => r.map(cell).join(',')).join('\r\n') + '\r\n';
+  const idCell = v => str(v).replace(/^@+/, '');   // 아이디 앞 @는 떼고 저장 (엑셀이 @로 시작하는 칸을 수식으로 읽지 않게)
+  const snsCell = p => igOf(p) || idCell(p.sns_id);   // 인스타그램 주소로 적었으면 아이디만
   function download(name, text) {
     const blob = new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' });   // BOM: 엑셀에서 한글 깨짐 방지
     const a = document.createElement('a');
@@ -582,8 +633,9 @@
   }
   function exportCSV() {
     if (!view.length) { toast('내보낼 응원이 없습니다.', 'err'); return; }
-    const head = ['n', 'status', 'region', 'member_id', 'nick', 'insta', 'prize', 'insta_checked', 'msg', 'created_at(KST)', 'reviewed_at', 'reviewed_by'];
-    const rows = view.map(p => [p.n, p.status, p.region, p.member_id, p.nick, igOf(p), p.prize ? 'Y' : 'N', p.insta_checked ? 'Y' : 'N', p.msg, kst(p.created_at, true), kst(p.reviewed_at, true), p.reviewed_by || '']);
+    const yn = v => v ? 'Y' : 'N';
+    const head = ['n', 'status', 'region', 'nick', 'phone', 'sns_id', 'sns_checked', 'youtube_id', 'youtube_checked', 'prize', 'tickets', 'msg', 'created_at(KST)', 'reviewed_at(KST)', 'reviewed_by'];
+    const rows = view.map(p => [p.n, p.status, p.region, str(p.nick), str(p.phone), snsCell(p), yn(p.sns_checked), idCell(p.youtube_id), yn(p.youtube_checked), yn(p.prize), tix(p), p.msg, kst(p.created_at, true), kst(p.reviewed_at, true), p.reviewed_by || '']);
     download(`티로아트월_${TAB_FILE[F.tab]}${F.region ? '_' + F.region : ''}_${stamp()}.csv`, toCSV([head, ...rows]));
     toast(`${num(view.length)}건을 CSV로 저장했습니다.`);
   }
@@ -596,7 +648,7 @@
     do crypto.getRandomValues(b); while (b[0] >= lim);
     return b[0] % max;
   }
-  // 추첨권 수만큼 가중치 · 뽑힌 사람은 빼고 다음 추첨 (비복원)
+  // 추첨 기회(1~3) 수만큼 가중치 · 뽑힌 사람은 빼고 다음 추첨 (비복원)
   function drawWeighted(pool, k) {
     const left = pool.slice(), out = [];
     let total = left.reduce((s, x) => s + x.t, 0);
@@ -613,8 +665,12 @@
     const el = eligible();
     $('#dEl').textContent = num(el.length);
     $('#dTix').textContent = num(el.reduce((s, p) => s + tix(p), 0));
-    $('#dTwo').textContent = num(el.filter(p => p.insta_checked).length);
+    $('#dTwo').textContent = `${num(el.filter(p => tix(p) === 2).length)} · ${num(el.filter(p => tix(p) >= 3).length)}`;
+    $('#dNoPh').textContent = num(el.filter(p => !str(p.phone)).length);
   }
+  const noPhone = p => !str(p.phone);
+  const NO_PHONE = '연락처 없음 — SNS로 연락 필요';
+  const noteOf = p => { const d = dupOf(p); return [noPhone(p) ? NO_PHONE : '', d.length ? `중복 의심(${d.map(x => x.label).join('·')})` : ''].filter(Boolean).join(' · '); };
   function openDraw() { renderDrawInfo(); renderDraw(); $('#dlgDraw').showModal(); }
 
   async function runDraw() {
@@ -632,29 +688,36 @@
       const won = new Set(w1.map(w => w.p.n));
       const w2 = k2 ? drawWeighted(pool.filter(x => !won.has(x.p.n)), k2) : [];
       draw = { at: new Date(), w1, w2, pool: pool.length, tickets: pool.reduce((s, x) => s + x.t, 0) };
-      if (w1.length < k1 || w2.length < k2) toast(`대상 인원(${num(pool.length)}명)이 모자라 뽑을 수 있는 만큼만 뽑았습니다.`, 'warn');
+      if (w1.length < k1 || w2.length < k2) toast(`대상(${num(pool.length)}건)이 모자라 뽑을 수 있는 만큼만 뽑았습니다.`, 'warn');
       else toast(`추첨을 마쳤습니다. 당첨 ${num(w1.length)}명${w2.length ? ` · 특별 경품 ${num(w2.length)}명` : ''}`);
+      const np = [...w1, ...w2].filter(w => noPhone(w.p)).length;
+      if (np) toast(`당첨자 ${num(np)}명은 연락처가 없습니다 — SNS로 연락이 필요합니다.`, 'warn');
       renderDraw();
     } finally { btn.disabled = false; btn.textContent = '추첨하기'; }
   }
   function renderDraw() {
     const out = $('#dOut');
     if (!draw) { out.innerHTML = ''; $('#dCsv').disabled = true; return; }
-    const table = (title, list) => `<h4>${esc(title)}<small>${num(list.length)}명</small></h4>
-      <div class="tblwrap"><table class="tbl"><thead><tr><th>순번</th><th>No.</th><th>소속</th><th>아이디</th><th>인스타</th><th>추첨권</th></tr></thead><tbody>${
-        list.map((w, i) => `<tr><td>${i + 1}</td><td>${esc(pad(w.p.n))}</td><td>${esc(w.p.region)}교총</td><td><b>${esc(w.p.member_id)}</b></td><td>${igOf(w.p) ? '@' + esc(igOf(w.p)) : '-'}</td><td${w.t > 1 ? ' class="t2"' : ''}>${w.t}</td></tr>`).join('')
+    const or = v => str(v) ? esc(str(v)) : '<span class="none">–</span>';
+    const table = (title, list) => {
+      const np = list.filter(w => noPhone(w.p)).length;
+      return `<h4>${esc(title)}<small>${num(list.length)}명</small>${np ? `<small class="warnc">연락처 없음 ${num(np)}명</small>` : ''}</h4>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>순번</th><th>No.</th><th>소속</th><th>닉네임</th><th>휴대전화</th><th>SNS 팔로우 아이디</th><th>유튜브 구독 아이디</th><th>추첨 기회</th><th>비고</th></tr></thead><tbody>${
+        list.map((w, i) => `<tr><td>${i + 1}</td><td>${esc(pad(w.p.n))}</td><td>${esc(w.p.region)}교총</td><td><b>${esc(w.p.nick)}</b></td><td>${or(w.p.phone)}</td><td>${igOf(w.p) ? '@' + esc(igOf(w.p)) : or(w.p.sns_id)}</td><td>${or(w.p.youtube_id)}</td><td${w.t > 1 ? ' class="t2"' : ''}>${w.t}회</td><td${noPhone(w.p) ? ' class="warnc"' : ''}>${esc(noteOf(w.p))}</td></tr>`).join('')
       }</tbody></table></div>`;
-    out.innerHTML = `<p class="dmeta">추첨 시각 ${esc(kst(draw.at, true))} (KST) · 대상 ${num(draw.pool)}명 · 추첨권 ${num(draw.tickets)}장</p>`
+    };
+    out.innerHTML = `<p class="dmeta">추첨 시각 ${esc(kst(draw.at, true))} (KST) · 대상 ${num(draw.pool)}건 · 추첨 기회 합계 ${num(draw.tickets)}회</p>`
       + table('1차 당첨', draw.w1) + (draw.w2.length ? table('특별 경품', draw.w2) : '');
     $('#dCsv').disabled = false;
   }
   function drawCSV() {
     if (!draw) return;
-    const head = ['구분', '순번', 'n', 'region', 'member_id', 'nick', 'insta', 'tickets', 'drawn_at(KST)'];
+    const head = ['구분', '순번', 'n', 'region', 'nick', 'phone', 'sns_id', 'youtube_id', 'tickets', 'note', 'drawn_at(KST)'];
     const at = kst(draw.at, true);
+    const line = (kind, w, i) => [kind, i + 1, w.p.n, w.p.region, str(w.p.nick), str(w.p.phone), snsCell(w.p), idCell(w.p.youtube_id), w.t, noteOf(w.p), at];
     const rows = [];
-    draw.w1.forEach((w, i) => rows.push(['1차 당첨', i + 1, w.p.n, w.p.region, w.p.member_id, w.p.nick, igOf(w.p), w.t, at]));
-    draw.w2.forEach((w, i) => rows.push(['특별 경품', i + 1, w.p.n, w.p.region, w.p.member_id, w.p.nick, igOf(w.p), w.t, at]));
+    draw.w1.forEach((w, i) => rows.push(line('1차 당첨', w, i)));
+    draw.w2.forEach((w, i) => rows.push(line('특별 경품', w, i)));
     download(`티로아트월_경품당첨자_${stamp()}.csv`, toCSV([head, ...rows]));
   }
 
@@ -710,7 +773,11 @@
     let qt = 0;
     $('#fQ').addEventListener('input', e => {
       clearTimeout(qt);
-      qt = setTimeout(() => { F.q = e.target.value.trim().replace(/^@/, '').replace(/^no\.?\s*(?=\d)/i, '').toLowerCase(); filterChanged(); }, 160);
+      qt = setTimeout(() => {
+        F.q = e.target.value.trim().replace(/^@/, '').replace(/^no\.?\s*(?=\d)/i, '').toLowerCase();
+        F.qd = /^[\d\s.()+-]+$/.test(F.q) && digits(F.q).length >= 3 ? digits(F.q) : '';   // 01012345678 ↔ 010-1234-5678
+        filterChanged();
+      }, 160);
     });
     $('#btnRefresh').onclick = async () => { if (await loadAll()) { loadSettings(true); toast('최신 목록을 불러왔습니다.'); } };
     $('#btnCsv').onclick = exportCSV;
@@ -735,8 +802,8 @@
       else if (ST[act]) review([n], act);
     });
     list.addEventListener('change', e => {
-      const a = e.target.closest('[data-act="insta"]'), row = e.target.closest('.row');
-      if (a && row) setInsta(+row.dataset.n, a.checked, a);
+      const a = e.target.closest('[data-act="chk"]'), row = e.target.closest('.row');
+      if (a && row) setCheck(+row.dataset.n, a.dataset.f, a.checked, a);
     });
     // 키보드: A 공개 · H 숨김 · P 대기 · Space 선택 · ↑↓(J/K) 이동 (한글 입력 상태에서도 되게 e.code 사용)
     list.addEventListener('keydown', e => {

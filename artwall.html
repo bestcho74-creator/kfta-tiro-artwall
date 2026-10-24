@@ -5,12 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>선생님들이 만드는 티로 수능응원 아트월 | 한국교총</title>
 <meta name="description" content="전국 교총 회원의 응원 조각이 모여 완성되는 티로 디지털 아트월">
+<meta property="og:type" content="website">
+<meta property="og:title" content="선생님들이 만드는 티로 수능응원 아트월 | 한국교총">
+<meta property="og:description" content="선생님의 한마디가 한 조각이 되어 티로를 완성합니다. 수험생 여러분을 응원합니다!">
+<meta property="og:image" content="https://bestcho74-creator.github.io/kfta-tiro-artwall/tiro_day.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#4F8BEA">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261021h">
+<link rel="stylesheet" href="join.css?v=20261024a">
 <style>
 @font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2) format('woff2')}
 :root{--grad:linear-gradient(100deg,#1F5FD0 0%,#3D8BFF 55%,#62C3FF 100%);--line:rgba(255,255,255,.22);--dim:rgba(255,255,255,.78);--faint:rgba(255,255,255,.55);--glass:rgba(18,40,104,.7);
@@ -67,28 +72,15 @@ button{cursor:pointer}
 .tip.on{opacity:1}
 .tip b{color:#FFD39A;margin-right:6px}
 
-/* 지역 현황 패널 */
-.regpanel{display:none;right:max(16px,3vw);top:50%;transform:translateY(-46%);width:248px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:20px;padding:16px 16px 12px}
-.rp-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-.rp-h b{font:800 15px var(--disp);letter-spacing:-.02em}
-.rp-h span{font-size:11px;color:var(--faint)}
-.rp-row{display:grid;grid-template-columns:30px 1fr 30px;gap:8px;align-items:center;height:21px;font-size:12px;font-weight:700}
-.rp-row .nm{color:var(--dim)}
-.rp-row .bk{height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
-.rp-row .bk i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#62C3FF,#B9CC4E 70%,#FFA25A);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
-.rp-row .ct{text-align:right;font-variant-numeric:tabular-nums}
-.rp-row.hit .nm,.rp-row.hit .ct{color:#FFD39A}
-.rp-row.hit .bk i{box-shadow:0 0 12px #FFD39A}
-.regpanel.on{display:block;animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
-.rp-x{border:0;background:rgba(255,255,255,.1);width:24px;height:24px;border-radius:50%;font-size:11px;margin-left:8px}
-.rp-more{display:block;width:100%;margin-top:8px;border:0;background:rgba(255,255,255,.08);border-radius:10px;padding:8px;font-size:12px;font-weight:700;color:var(--dim)}
-.rp-more:hover{background:rgba(255,255,255,.16)}
-@media (max-width:720px),(max-height:620px){.regpanel{left:12px;right:12px;width:auto;top:auto;bottom:calc(env(safe-area-inset-bottom) + 76px);transform:none;max-height:58svh;overflow:auto}}
-body.signage .regpanel.on{right:3vw;top:22vh;transform:none;width:clamp(220px,15vw,420px);padding:1.4vh 1vw;border-radius:clamp(16px,1.2vw,28px)}
-body.signage .rp-h b{font-size:clamp(14px,1vw,24px)}
-body.signage .rp-h span{font-size:clamp(10px,.7vw,16px)}
-body.signage .rp-row{height:2.3vh;font-size:clamp(11px,.75vw,18px);grid-template-columns:2.2em 1fr 2.4em}
-body.signage .rp-row .bk{height:.7vh}
+
+/* 공유하기 */
+.share-sheet{width:min(440px,calc(100vw - 20px))}
+.share-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.share-grid button{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:rgba(255,255,255,.07);border-radius:14px;padding:12px;font-size:14px;font-weight:700;color:#fff;text-align:left;transition:background .2s}
+.share-grid button:hover{background:rgba(255,255,255,.15)}
+.sh-ic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:14px;color:#fff}
+.sh-link{background:#3D8BFF}.sh-ig{background:linear-gradient(135deg,#FEDA75,#FA7E1E 35%,#D62976 65%,#962FBF)}.sh-fb{background:#1877F2;font-family:Arial,sans-serif;font-size:18px}
+.sh-th{background:#111}.sh-x{background:#000}.sh-band{background:#2DB400}.sh-more{background:rgba(255,255,255,.2)}
 
 /* 다이얼로그 */
 dialog{border:0;padding:0;background:transparent;color:#fff;max-width:none;max-height:none;margin:auto}
@@ -147,16 +139,6 @@ dialog[open]{animation:pop .35s cubic-bezier(.2,.9,.3,1.2)}
 .tags-list{display:flex;flex-wrap:wrap;gap:6px}
 .tags-list span{background:rgba(255,255,255,.1);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:700;user-select:all;-webkit-user-select:all}
 .tags .g2{margin-top:12px}
-.regs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.reg{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-.reg .t{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700}
-.reg .t b{font-size:20px;font-variant-numeric:tabular-nums}
-.reg .bar2{height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
-.reg .bar2 i{display:block;height:100%;background:var(--grad);border-radius:2px}
-.tix{display:flex;gap:8px;margin:14px 0}
-.tix div{flex:1;border-radius:16px;padding:14px;background:linear-gradient(135deg,rgba(98,195,255,.22),rgba(185,204,78,.16));border:1px solid rgba(255,255,255,.14)}
-.tix b{display:block;font:800 24px var(--disp)}
-.tix span{font-size:12px;color:var(--dim)}
 
 .toast{position:fixed;z-index:100;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;background:#fff;color:#14081F;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:0 10px 40px rgba(0,0,0,.4);transition:all .3s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -192,7 +174,6 @@ body.signage .sg{display:block}
 .sg-qr p{font-size:clamp(14px,1.2vw,26px);font-weight:800;line-height:1.35}
 .sg-qr small{display:block;font-size:clamp(11px,.9vw,18px);color:var(--dim);font-weight:500;margin-top:.5vh}
 @media (orientation:portrait){
-  body.signage .regpanel{display:none}
   .sg-card{left:4vw;right:auto;width:min(56vw,30vh);bottom:3vh}
   .sg-qr{left:auto;right:4vw;bottom:3vh}
 }
@@ -236,18 +217,12 @@ body.signage .sg{display:block}
     <button class="tool" id="fit" type="button">전체</button>
     <span class="find" id="find"><input id="findIn" inputmode="numeric" placeholder="응원 번호" aria-label="응원 번호"><button class="btn btn-white" id="findGo" type="button" style="padding:9px 12px">찾기</button></span>
     <button class="tool" id="findBtn" type="button">내 조각<span class="lg">&nbsp;찾기</span></button>
-    <button class="tool" id="rand" type="button">랜덤<span class="lg">&nbsp;응원</span></button>
-    <button class="tool" id="regBtn" type="button">지역<span class="lg">&nbsp;현황</span></button>
     <span class="seg" role="group" aria-label="낮 · 밤 선택"><button class="tool" data-theme="day" type="button">☀<span class="lg">&nbsp;낮</span></button><button class="tool" data-theme="night" type="button">☾<span class="lg">&nbsp;밤</span></button></span>
     <button class="tool" id="sgBtn" type="button" title="단축키 S"><span class="lg">사이니지</span><span aria-hidden="true">⛶</span></button>
   </div>
 </div>
 
-<aside class="ui regpanel" id="regPanel" aria-label="지역별 응원 조각 현황">
-  <div class="rp-h"><b>지역별 응원 조각</b><span style="margin-left:auto">17개 시·도교총</span><button class="rp-x" id="rpClose" type="button" aria-label="닫기">✕</button></div>
-  <div class="rp-list" id="rpList"></div>
-  <button class="rp-more" id="rpMore" type="button">응모 안내 보기</button>
-</aside>
+
 
 <!-- 응원 카드 -->
 <dialog id="pieceDlg" aria-label="응원 카드">
@@ -259,9 +234,8 @@ body.signage .sg{display:block}
     <p class="pmeta" id="pMeta"></p>
     <div class="g2" id="pMine" hidden>
       <button class="btn btn-white" id="story" type="button">스토리 이미지 저장</button>
-      <button class="btn btn-ghost" id="share" type="button">공유하기</button>
-      <button class="btn btn-ghost" id="copy" type="button">내 조각 링크 복사</button>
-      <button class="btn btn-ghost" id="pStay" type="button">아트월 계속 보기</button>
+      <button class="btn btn-ghost" id="share" type="button">공유하기 ↗</button>
+      <button class="btn btn-ghost" id="pStay" type="button" style="grid-column:1/-1">아트월 계속 보기</button>
     </div>
     <div class="tags" id="pTags" hidden>
       <div class="tags-h"><b>필수 해시태그</b><span>스토리 · 피드에 함께 붙여 넣어 주세요</span></div>
@@ -269,19 +243,26 @@ body.signage .sg{display:block}
       <div class="g2"><button class="btn btn-white" id="copyTags" type="button">해시태그 복사</button><button class="btn btn-ghost" id="copyCaption" type="button">피드 문구 전체 복사</button></div>
     </div>
     <p class="tk" id="pTk" hidden></p>
-    <div class="rowb" id="pOther"><button class="btn btn-ghost" id="pNext" type="button">다른 응원 보기</button><button class="btn btn-grad" data-join type="button">나도 응원하기</button></div>
+    <div class="rowb" id="pOther"><button class="btn btn-ghost" data-close type="button">닫기</button><button class="btn btn-grad" data-join type="button">나도 응원하기</button></div>
   </div>
 </dialog>
 
-<!-- 지역 현황 · 응모 안내 -->
-<dialog id="regDlg" aria-label="지역별 참여 현황">
-  <div class="sheet">
+<!-- 공유하기 -->
+<dialog id="shareDlg" aria-label="공유하기">
+  <div class="sheet share-sheet">
     <button class="x" data-close type="button" aria-label="닫기">✕</button>
-    <h3>우리 지역 교총의 응원은 몇 조각일까요?</h3>
-    <p class="sub">지역마다 회원 규모가 다르므로 순위가 아닌 참여의 흐름으로 봐 주세요.</p>
-    <div class="regs" id="regs"></div>
-    <div class="tix"><div><b>1장</b><span>응원 등록 시 기본 응모권</span></div><div><b>+1회</b><span>인스타그램 이벤트 댓글 참여 시 추가 추첨 기회</span></div></div>
-    <p class="small">한국교총 인스타그램 이벤트 게시물에 댓글로 '티로'를 남기면 갤러리 초대 링크를 DM으로 보내 드립니다. 1인 최대 2장이며, 추첨 방식과 발표 일정은 별도로 공지합니다.</p>
+    <h3>내 응원 공유하기</h3>
+    <p class="sub">공유할 곳을 골라 주세요. 필수 해시태그도 함께 붙여 주세요.</p>
+    <div class="share-grid">
+      <button type="button" data-share="copy"><i class="sh-ic sh-link">🔗</i>링크 복사하기</button>
+      <button type="button" data-share="instagram"><i class="sh-ic sh-ig">IG</i>인스타그램으로 공유</button>
+      <button type="button" data-share="facebook"><i class="sh-ic sh-fb">f</i>페이스북으로 공유</button>
+      <button type="button" data-share="threads"><i class="sh-ic sh-th">@</i>스레드로 공유</button>
+      <button type="button" data-share="x"><i class="sh-ic sh-x">X</i>X로 공유</button>
+      <button type="button" data-share="band"><i class="sh-ic sh-band">B</i>밴드로 공유</button>
+      <button type="button" data-share="more" id="shareMore" hidden><i class="sh-ic sh-more">⋯</i>다른 앱으로 공유</button>
+    </div>
+    <p class="small" id="shareNote">인스타그램은 스토리 이미지를 저장한 뒤 앱에서 올려 주세요. 문구와 해시태그는 자동으로 복사됩니다.</p>
   </div>
 </dialog>
 
@@ -294,12 +275,12 @@ body.signage .sg{display:block}
 <div class="intro" id="intro"><p>선생님들이 만드는<br><span class="g">티로</span> 수능응원 아트월<small>MEDIA ART · KFTA × TIRO</small></p></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="config.js?v=20261021h"></script>
-<script src="assets.js?v=20261021h"></script>
-<script src="data.js?v=20261021h"></script>
-<script src="qm-engine.js?v=20261021h"></script>
-<script src="join.js?v=20261021h"></script>
+<script src="config.js?v=20261024a"></script>
+<script src="assets.js?v=20261024a"></script>
+<script src="data.js?v=20261024a"></script>
+<script src="qm-engine.js?v=20261024a"></script>
+<script src="join.js?v=20261024a"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="artwall.js?v=20261021h"></script>
+<script src="artwall.js?v=20261024a"></script>
 </body>
 </html>
