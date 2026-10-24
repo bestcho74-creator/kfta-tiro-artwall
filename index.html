@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261024c">
+<link rel="stylesheet" href="join.css?v=20261024d">
 <style>
 @font-face{font-family:'Paperlogy';font-weight:500;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2) format('woff2')}
 @font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format('woff2')}
@@ -47,11 +47,11 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
 </div>
 <div id="stage"></div>
 
-<script src="config.js?v=20261024c"></script>
-<script src="assets.js?v=20261024c"></script>
-<script src="data.js?v=20261024c"></script>
-<script src="qm-engine.js?v=20261024c"></script>
-<script src="join.js?v=20261024c"></script>
+<script src="config.js?v=20261024d"></script>
+<script src="assets.js?v=20261024d"></script>
+<script src="data.js?v=20261024d"></script>
+<script src="qm-engine.js?v=20261024d"></script>
+<script src="join.js?v=20261024d"></script>
 <script>
 (async function () {
   const { CONFIG: SITE, Store, dday, keyedTiro, rng, getTheme, setTheme } = KFTA;
@@ -215,6 +215,7 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;-webkit-font-smooth
   document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { if (theme === b.dataset.theme) return; theme = b.dataset.theme; setTheme(theme); start(); });
   start();
   if (location.hash === '#join') setTimeout(openJoin, 600);   // 사이니지 QR로 들어온 경우
+  addEventListener('hashchange', () => { if (location.hash === '#join') openJoin(); });
 })();
 </script>
 </body>
