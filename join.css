@@ -67,6 +67,16 @@
 .jx-prize-h b{font-size:14px;color:#FFD39A}
 .jx-prize-h span{font-size:12px;color:rgba(255,255,255,.7)}
 .jx-prize .jx-field{margin-top:12px}
+.jx-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.jx-link{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px 0 5px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-family:inherit;font-size:12px;font-weight:700;text-decoration:none;transition:border-color .15s,background .15s}
+.jx-link:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.13)}
+.jx-link i{flex:none;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:12px;color:#fff}
+.jx-link i svg{display:block}
+.jx-link span{opacity:.6;font-size:11px}
+.li-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285AEB 90%)}
+.li-fb{background:#1877F2;font-family:Arial,sans-serif}
+.li-yt{background:#FF0000}
+.jx-gift{margin:8px 2px 0;font-size:13px;font-weight:800;color:#FFD39A;line-height:1.5}
 .jx-field em{font-style:normal;font-size:11px;font-weight:800;color:#14306E;background:#FFD39A;border-radius:999px;padding:1px 7px;margin-left:4px}
 .jx-check.need span{color:#FFD39A}
 .jx-check.need input{outline:2px solid #FFD39A;outline-offset:2px;border-radius:4px}

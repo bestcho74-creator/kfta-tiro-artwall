@@ -571,7 +571,7 @@
     if (mine) {
       lastMine = p;
       const extra = (p.sns ? 1 : 0) + (p.youtube ? 1 : 0);
-      tk.textContent = (p.pending ? '검수 대기 중이에요. 승인되면 모든 화면의 아트월에 공개됩니다. ' : '') + (p.prize ? `경품 응모 완료! 추첨 기회 1회${extra ? `에 SNS·유튜브 확인 시 ${extra}회가 더해져 당첨 확률이 높아져요.` : '. SNS 팔로우·유튜브 구독 아이디를 남기면 당첨 확률이 높아져요.'}` : '경품 응모는 선택하지 않으셨어요.');
+      tk.textContent = (p.pending ? '검수 대기 중이에요. 승인되면 모든 화면의 아트월에 공개됩니다. ' : '') + (p.prize ? `경품 응모 완료! ${extra ? `SNS·유튜브 확인 시 당첨 확률이 ${extra + 1}배로 높아져요.` : 'SNS 팔로우·유튜브 구독 아이디를 남기면 당첨 확률이 최대 3배로 높아져요.'} 별도 당첨자 공지는 하지 않습니다.` : '경품 응모는 선택하지 않으셨어요.');
     }
     if (!pieceDlg.open) pieceDlg.showModal();
   }

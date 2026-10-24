@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="join.css?v=20261024e">
+<link rel="stylesheet" href="join.css?v=20261024f">
 <style>
 /* 티로 아트월 · 관리자 (검수 · 경품 추첨) — 아트월과 같은 남색 유리 UI */
 :root{--navy:#14306E;--navy2:#0B1D4D;--blue:#1F5FD0;--blue2:#3D8BFF;--sky:#62C3FF;--gold:#FFD39A;--gold2:#FFB866;--mint:#86E3B8;--rose:#FF9C9C;
@@ -407,8 +407,8 @@ dialog.dlg[open] .sheet{animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
       <div><b id="dNoPh">0</b><span>연락처 없음 (건)</span></div>
     </div>
     <div class="dform">
-      <label>당첨 인원<input id="dK1" type="number" min="0" step="1" value="100" inputmode="numeric"></label>
-      <label>특별 경품 인원<input id="dK2" type="number" min="0" step="1" value="5" inputmode="numeric"><small>0이면 생략 · 1차 당첨자 제외</small></label>
+      <label>당첨 인원<input id="dK1" type="number" min="0" step="1" value="150" inputmode="numeric"></label>
+      <label>특별 경품 인원<input id="dK2" type="number" min="0" step="1" value="0" inputmode="numeric"><small>0이면 생략 · 1차 당첨자 제외</small></label>
     </div>
     <p class="note"><b>SNS 팔로우·유튜브 구독이 확인되면 추첨 기회가 1회씩 늘어납니다 (최대 3회)</b> — 추첨 기회 수만큼 가중치를 두고 한 명씩 중복 없이 뽑습니다 (crypto.getRandomValues · 당첨 확률이 기회 수만큼 정확히 배가 되지는 않음).<br>같은 휴대전화·SNS·유튜브 아이디로 여러 건이 들어왔다면 목록의 <b>중복 의심</b>을 먼저 확인해 주세요. 연락처가 없는 당첨자는 SNS로 연락해야 합니다.<br>추첨 직전에 최신 목록을 다시 불러옵니다. 결과는 서버에 저장되지 않으니 <b>CSV로 내려받아 보관</b>해 주세요.</p>
     <div class="dbtns">
@@ -422,10 +422,10 @@ dialog.dlg[open] .sheet{animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <noscript><p style="text-align:center;padding:40px">이 화면은 자바스크립트가 필요합니다.</p></noscript>
 
-<script src="config.js?v=20261024e"></script>
-<script src="assets.js?v=20261024e"></script>
-<script src="data.js?v=20261024e"></script>
-<script src="join.js?v=20261024e"></script>
-<script src="admin.js?v=20261024e"></script>
+<script src="config.js?v=20261024f"></script>
+<script src="assets.js?v=20261024f"></script>
+<script src="data.js?v=20261024f"></script>
+<script src="join.js?v=20261024f"></script>
+<script src="admin.js?v=20261024f"></script>
 </body>
 </html>

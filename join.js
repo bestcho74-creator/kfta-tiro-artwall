@@ -5,6 +5,15 @@
   const SRC = global.ASSETS.cards;
   const MAX = 100;
   const NICK_EX = ['국어쌤', '3학년 담임', '수학하는 티로', '보건실 지킴이', '응원단장'];   // 닉네임 예시
+  // 한국교총 공식 SNS · 유튜브 (팔로우 · 구독 안내용)
+  const KFTA_LINKS = {
+    instagram: 'https://www.instagram.com/koreakfta/',
+    facebook: 'https://www.facebook.com/kfta0515',
+    youtube: 'https://www.youtube.com/@TV-ii7ez',
+  };
+  const IC_IG = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.5" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="17.3" cy="6.7" r="1.4" fill="#fff"/></svg>';
+  const IC_YT = '<svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M7 4.5v15L19.5 12z" fill="#fff"/></svg>';
+  const linkEl = (href, cls, icon, text) => `<a class="jx-link" href="${href}" target="_blank" rel="noopener noreferrer"><i class="${cls}">${icon}</i>${text}<span aria-hidden="true">↗</span></a>`;
 
   const sizeClass = n => n <= 24 ? 'l1' : n <= 50 ? 'l2' : n <= 80 ? 'l3' : 'l4';
   const signOf = p => p.nick || '닉네임';
@@ -101,16 +110,19 @@
       <div class="jx-prize-h"><b>경품 응모 (선택)</b><span>채워 넣을수록 당첨 확률이 높아져요</span></div>
       <label class="jx-field"><span>휴대전화 번호 · 경품 발송용</span><input id="jxPhone" type="tel" inputmode="numeric" maxlength="13" autocomplete="tel" placeholder="010-0000-0000"></label>
       <label class="jx-field"><span>한국교총 SNS 팔로우 아이디 <em>당첨 확률 UP</em></span><input id="jxSns" maxlength="40" autocapitalize="off" spellcheck="false" placeholder="교총 SNS를 팔로우한 내 아이디 (@아이디)"></label>
+      <div class="jx-links">${linkEl(KFTA_LINKS.instagram, 'li-ig', IC_IG, '교총 인스타그램')}${linkEl(KFTA_LINKS.facebook, 'li-fb', 'f', '교총 페이스북')}</div>
       <label class="jx-field"><span>한국교총 유튜브 구독 아이디 <em>당첨 확률 UP</em></span><input id="jxYt" maxlength="60" autocapitalize="off" spellcheck="false" placeholder="교총 유튜브를 구독한 내 채널명 (@핸들)"></label>
-      <p class="jx-help">SNS 팔로우와 유튜브 구독이 확인되면 추첨 기회가 1회씩 늘어나 당첨 확률이 높아집니다 (최대 3회). 입력한 정보는 공개되지 않고 경품 추첨과 발송에만 쓰입니다.</p>
+      <div class="jx-links">${linkEl(KFTA_LINKS.youtube, 'li-yt', IC_YT, '교총 유튜브')}</div>
+      <p class="jx-help">SNS 팔로우와 유튜브 구독이 확인되면 당첨 확률이 2배씩 높아집니다 (최대 3배). 입력한 정보는 공개되지 않고 경품 추첨과 발송에만 쓰입니다.</p>
+      <p class="jx-gift">* 경품 및 당첨인원 : 네이버페이 5천원권, 총 150명!!</p>
     </div>
     <div class="jx-cons">
       <label class="jx-check"><input type="checkbox" id="jxC1"><span><b>[필수]</b> 닉네임 · 응원 메시지가 아트월에 공개되는 것에 동의합니다.</span></label>
-      <label class="jx-check"><input type="checkbox" id="jxC3"><span><b>[선택]</b> 경품 추첨에 응모하며, 위에 적은 휴대전화 번호 · SNS · 유튜브 아이디를 추첨과 경품 발송에만 쓰는 것에 동의합니다. (이벤트 종료 후 파기)</span></label>
+      <label class="jx-check"><input type="checkbox" id="jxC3"><span><b>[선택]</b> 경품 추첨에 응모하며, 위에 적은 휴대전화 번호 · SNS · 유튜브 아이디를 추첨과 경품 발송에만 쓰는 것에 동의합니다. (경품 발송 완료 후 1주일 이내 파기)</span></label>
     </div>
     <div class="jx-row"><button class="jx-btn jx-ghost" type="button" data-go="2">이전</button><button class="jx-btn jx-main" type="button" id="jxSend" disabled>응원 보내기 ✦</button></div>
     <p class="jx-err" id="jxErr" role="alert" hidden></p>
-    <p class="jx-small">보내 주신 응원은 검수 후 아트월에 공개됩니다. 개인정보나 부적절한 표현이 담긴 응원은 공개되지 않을 수 있습니다.</p>
+    <p class="jx-small">보내 주신 응원은 검수 후 아트월에 공개됩니다. 개인정보나 부적절한 표현이 담긴 응원은 공개되지 않을 수 있습니다.<br>별도 당첨자 공지는 하지 않습니다.</p>
   </section>
 </div>`;
     document.body.appendChild(dlg);
