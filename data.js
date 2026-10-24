@@ -81,9 +81,10 @@
 
   // ===== 저장소 =====
   const B = global.KFTA_BACKEND || {};
-  const REMOTE = !!(B.url && B.anonKey);
   const q = new URLSearchParams(location.search);
-  const DEMO = q.has('demo') ? q.get('demo') !== '0' : !REMOTE && CONFIG.demo;   // 공유 저장소에서는 예시 응원을 섞지 않음
+  const DEMO_VIEW = q.has('demo') && q.get('demo') !== '0';   // ?demo=1: 예시 응원으로 보는 미리보기 (서버에 쓰지 않음)
+  const REMOTE = !!(B.url && B.anonKey) && !DEMO_VIEW;
+  const DEMO = DEMO_VIEW || (!REMOTE && CONFIG.demo);          // 공유 저장소에서는 예시 응원을 섞지 않음
   const KEY = REMOTE ? 'kfta-tiro-2026-mine' : 'kfta-tiro-2026-pieces';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
   const save = l => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {} };
